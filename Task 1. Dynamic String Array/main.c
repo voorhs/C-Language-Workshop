@@ -29,16 +29,11 @@ char* read_string() {
 
     int size_of_str = 0, size_alloc = sizeof(char);
 
-    while (((c = getchar()) != '\n') && (c != EOF)) {
-        if (++size_of_str * sizeof(char) > size_alloc) {
-            size_alloc *= 2;
-            result = realloc(result, size_alloc);
-        }
-        result[size_of_str - 1] = c;
+    while (((c = getchar()) != '\n') && (c != EOF)) {                
+        result[size_of_str++] = c;
+        size_alloc += sizeof(char);
+        result = realloc(result, size_alloc);
     }
-
-    if (size_of_str == size_alloc)
-        result = realloc(result, size_of_str + 1);
     result[size_of_str] = '\0';
 
     if (c == EOF)
@@ -53,11 +48,10 @@ char** read_str_array() {
     int size_alloc = sizeof(char*), str_count = 0;
 
     while (1) {
-        if (str_count * sizeof(char*) == size_alloc) {
-            size_alloc *= 2;
-            result = (char**)realloc(result, size_alloc);
-        }            
         result[str_count] = read_string();
+        size_alloc += sizeof(char*);
+        result = (char**)realloc(result, size_alloc); 
+        
         if (result[str_count] == NULL)
             break;
         else
