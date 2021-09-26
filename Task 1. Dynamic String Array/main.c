@@ -18,7 +18,7 @@ char* read_string() {
         result = realloc(result, size_of_str + 1);
     result[size_of_str] = '\0';
 
-    if (size_of_str = 0)
+    if (size_of_str == 0)
         return NULL;
     else
         return result;
@@ -28,5 +28,6 @@ int main() {
     char *s;
     s = read_string();
     printf("result is %s\n", s);
+    free(s);
     return 0;
 }
