@@ -44,18 +44,14 @@ char* read_string() {
 
 char** read_str_array() {
     char **result = (char**)malloc(sizeof(char*));
+    result[0] = read_string();
 
-    int size_alloc = sizeof(char*), str_count = 0;
+    int size_alloc = sizeof(char**), str_count = 0;
 
-    while (1) {
-        result[str_count] = read_string();
-        size_alloc += sizeof(char*);
-        result = (char**)realloc(result, size_alloc); 
-        
-        if (result[str_count] == NULL)
-            break;
-        else
-            str_count++;                    //check whether str_count can be placed in while or not
+    while (result[str_count]) {
+        size_alloc += sizeof(char**);
+        result = (char**)realloc(result, size_alloc);
+        result[++str_count] = read_string();
     }
 
     if (str_count == 0)
@@ -89,4 +85,3 @@ void sort_str_array(char** sarray, int size)
                 sarray[j] = temp;
             }
 }
-
