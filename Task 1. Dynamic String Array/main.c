@@ -50,7 +50,15 @@ char** read_str_array() {
 
 }
 
+void print_str_array(char** sarray) {
+    int i = 0;
+    for (i; sarray[i]; i++) {
+        printf("%s\n", sarray[i]);
+    }
+}
+
 int main() {
     char **sarray = read_str_array();
+    print_str_array(sarray);
     return 0;
 }
