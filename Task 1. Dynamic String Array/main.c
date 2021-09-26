@@ -18,12 +18,10 @@ char* read_string() {
         result = realloc(result, size_of_str + 1);
     result[size_of_str] = '\0';
 
-    if (size_of_str == 0) {
-        free(result);
+    if (c == EOF)
         return NULL;
-    }
     else
-        return result;
+        return result;    
 }
 
 char** read_str_array() {
@@ -51,8 +49,8 @@ char** read_str_array() {
 }
 
 void print_str_array(char** sarray) {
-    int i = 0;
-    for (i; sarray[i]; i++) {
+    int i;
+    for(i = 0; sarray[i]; i++) {
         printf("%s\n", sarray[i]);
     }
 }
