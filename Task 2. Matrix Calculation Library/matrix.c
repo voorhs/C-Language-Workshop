@@ -55,6 +55,7 @@ Matrix** sum(Matrix** a, Matrix** b, int m, int n) {
         for (j = 0; j < n; j++)
             c[i][j] = a[i][j] + b[i][j];
     }
+    
     return c;
 }
 
@@ -62,12 +63,30 @@ Matrix** scalar_prod(double num, Matrix** a, int m, int n)  {
     Matrix** c = malloc(sizeof(Matrix*) * m);
 
     int i, j;
-    
+
     for (i = 0; i < m; i++) {
         c[i] = malloc(sizeof(Matrix) * n);
 
         for (j = 0; j < n; j++)
             c[i][j] = num * a[i][j];
     }
+
+    return c;
+}
+
+Matrix** dot(Matrix** a, Matrix** b, int m, int n, int k) {
+    Matrix** c = malloc(sizeof(Matrix*) * m);
+
+    int i, j, r;
+
+    for (i = 0; i < m; i++) {
+        c[i] = malloc(sizeof(Matrix) * k);
+        for (j = 0; j < k; j++) {
+            c[i][j] = 0;
+            for (r = 0; r < n; r++)
+                c[i][j] += a[i][r] * b[r][j];
+        }
+    }
+
     return c;
 }

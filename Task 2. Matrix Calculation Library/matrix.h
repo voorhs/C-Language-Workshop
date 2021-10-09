@@ -8,4 +8,6 @@ void free_matrix(Matrix**, int, int);
 
 Matrix** sum(Matrix**, Matrix**, int, int);
 
-Matrix** scalar_prod(double, Matrix**, int, int) ;
+Matrix** scalar_prod(double, Matrix**, int, int);
+
+Matrix** dot(Matrix**, Matrix**, int, int, int);
