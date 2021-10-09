@@ -2,15 +2,13 @@
 #include <stdlib.h>
 #include "matrix.h"
 
-#define M 2
-#define N 2
+#define M 4
+#define N 4
 #define K 3
 
 int main() {
-    Matrix **m = read_matrix(M, N);
-    print_matrix(m, M, N);
-    Matrix **p = read_matrix(N, K);
-    print_matrix(p, N, K);
-    print_matrix(dot(m, p, M, N, K), M, K);
+    Matrix **m = read_matrix(M, M), x;
+    printf("%10.3lf\n", det(m, M));
+    print_matrix(m, M, M);
     return 0;
 }
