@@ -62,7 +62,7 @@ Matrix** scalar_prod(double num, Matrix** a, int m, int n)  {
     Matrix** c = malloc(sizeof(Matrix*) * m);
 
     int i, j;
-
+    
     for (i = 0; i < m; i++) {
         c[i] = malloc(sizeof(Matrix) * n);
 
