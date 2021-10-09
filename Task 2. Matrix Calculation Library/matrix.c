@@ -20,7 +20,8 @@ Matrix** read_matrix(int m, int n) {
         for (i = 0; i < m; i++)
             free(a[i]);
         free(a);
-        return NULL;
+        printf("ops");
+        exit(1);
     }
     return a;
     
@@ -35,6 +36,38 @@ void print_matrix(Matrix** a, int m, int n) {
     }
 }
 
-// Matrix** sum(Matrix** a, Matrix** b, int m, int n) {
-// 
-// }
+void free_matrix(Matrix** a, int m, int n) {
+    int i, j;
+    for (i = 0; i < m; i++) {
+        free(a[i]);
+    }
+    free(a);
+}
+
+Matrix** sum(Matrix** a, Matrix** b, int m, int n) {
+    Matrix** c = malloc(sizeof(Matrix*) * m);
+
+    int i, j;
+
+    for (i = 0; i < m; i++) {
+        c[i] = malloc(sizeof(Matrix) * n);
+
+        for (j = 0; j < n; j++)
+            c[i][j] = a[i][j] + b[i][j];
+    }
+    return c;
+}
+
+Matrix** scalar_prod(double num, Matrix** a, int m, int n)  {
+    Matrix** c = malloc(sizeof(Matrix*) * m);
+
+    int i, j;
+
+    for (i = 0; i < m; i++) {
+        c[i] = malloc(sizeof(Matrix) * n);
+
+        for (j = 0; j < n; j++)
+            c[i][j] = num * a[i][j];
+    }
+    return c;
+}

@@ -7,9 +7,12 @@
 
 int main() {
     Matrix **m = read_matrix(M, N);
-    if (m != NULL)
-        print_matrix(m, M, N);
-    else
-        printf("ops\n");
+    print_matrix(m, M, N);
+    Matrix **p = read_matrix(M, N);
+    print_matrix(p, M, N);
+    print_matrix(sum(m, p, M, N), M, N);
+    double x;
+    scanf("%lf", &x);
+    print_matrix(scalar_prod(x, m, M, N), M, N);
     return 0;
 }
