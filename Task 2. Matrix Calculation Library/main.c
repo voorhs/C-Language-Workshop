@@ -7,5 +7,9 @@
 
 int main() {
     Matrix **m = read_matrix(M, N);
+    if (m != NULL)
+        print_matrix(m, M, N);
+    else
+        printf("ops\n");
     return 0;
 }
