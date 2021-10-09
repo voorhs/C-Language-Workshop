@@ -25,20 +25,22 @@ Matrix** read_matrix(int m, int n) {
         for (i = 0; i < m; i++)
             free(a[i]);
         free(a);
-        printf("ops");
+        printf("Ops! Something's wrong :|\n");
         exit(1);
     }
     return a;
     
 }
 
-void print_matrix(Matrix** a, int m, int n) {
+void print_matrix(char* msg, Matrix** a, int m, int n) {
+    printf("%s", msg);
     int i, j;
     for (i = 0; i < m; i++) {
         for (j = 0; j < n; j++)
             printf(sp_, a[i][j]);
         printf("\n");
     }
+    printf("\n");
 }
 
 void free_matrix(Matrix** a, int m, int n) {
