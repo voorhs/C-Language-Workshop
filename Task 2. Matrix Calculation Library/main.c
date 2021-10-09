@@ -7,9 +7,10 @@
 
 int main() {
     Matrix **m = read_matrix(M, N);
-    if (m != NULL)
-        print_matrix(m, M, N);
-    else
-        printf("ops\n");
+    print_matrix(m, M, N);
+    Matrix **p = read_matrix(M, N);
+    print_matrix(p, M, N);
+    Matrix **c = sum(m, p, M, N);
+    print_matrix(c, M, N);
     return 0;
 }
