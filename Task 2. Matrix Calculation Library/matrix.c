@@ -5,156 +5,155 @@
 #include <math.h>
 #include "matrix.h"
 
-Matrix** read_matrix(int m, int n) {
-    Matrix** a = malloc(sizeof(Matrix*) * m);
+Matrix** read_matrix(int row_count, int col_count) {
+    Matrix** array = malloc(sizeof(Matrix*) * row_count);
     
     int i, j, read_err = 0;
 
-    for (i = 0; i < m && !read_err; i++) {
-        a[i] = malloc(sizeof(Matrix) * n);
-
-        for (j = 0; j < n && !read_err; j++) {
-            if (scanf("%lf", a[i] + j) == 0)
+    for (i = 0; i < row_count && !read_err; i++) {
+       array[i] = malloc(sizeof(Matrix) * col_count);
+        for (j = 0; j < col_count && !read_err; j++) {
+            if (scanf("%lf", array[i] + j) == 0)
                 read_err = 1;
         }
     }
     if (read_err) {
-        for (i = 0; i < m; i++)
-            free(a[i]);
-        free(a);
+        for (i = 0; i < row_count; i++)
+            free(array[i]);
+        free(array);
         printf("Ops! Something's wrong :|\n");
         exit(1);
     }
-    return a;
+    return array;
     
 }
 
-void print_matrix(char* message, Matrix** a, int m, int n) {
+void print_matrix(char* message, Matrix** array, int row_count, int col_count) {
     printf("%s", message);
     int i, j;
-    for (i = 0; i < m; i++) {
-        for (j = 0; j < n; j++)
-            printf("%10.3lf ", a[i][j]);
+    for (i = 0; i < row_count; i++) {
+        for (j = 0; j < col_count; j++)
+            printf("%10.3lf ", array[i][j]);
         printf("\n");
     }
     printf("\n");
 }
 
-void free_matrix(Matrix** a, int m, int n) {
+void free_matrix(Matrix** array, int row_count) {
     int i, j;
-    for (i = 0; i < m; i++) {
-        free(a[i]);
+    for (i = 0; i < row_count; i++) {
+        free(array[i]);
     }
-    free(a);
+    free(array);
 }
 
-Matrix** sum(Matrix** a, Matrix** b, int m, int n) {
-    Matrix** c = malloc(sizeof(Matrix*) * m);
-
-    int i, j;
-
-    for (i = 0; i < m; i++) {
-        c[i] = malloc(sizeof(Matrix) * n);
-
-        for (j = 0; j < n; j++)
-            c[i][j] = a[i][j] + b[i][j];
-    }
-
-    return c;
-}
-
-Matrix** scalar_prod(double num, Matrix** a, int m, int n)  {
-    Matrix** c = malloc(sizeof(Matrix*) * m);
+Matrix** sum(Matrix** array_1, Matrix** array_2, int row_count, int col_count) {
+    Matrix** result = malloc(sizeof(Matrix*) * row_count);
 
     int i, j;
 
-    for (i = 0; i < m; i++) {
-        c[i] = malloc(sizeof(Matrix) * n);
+    for (i = 0; i < row_count; i++) {
+        result[i] = malloc(sizeof(Matrix) * col_count);
 
-        for (j = 0; j < n; j++)
-            c[i][j] = num * a[i][j];
+        for (j = 0; j < col_count; j++)
+            result[i][j] = array_1[i][j] + array_2[i][j];
     }
 
-    return c;
+    return result;
 }
 
-Matrix** dot(Matrix** a, Matrix** b, int m, int n, int k) {
-    Matrix** c = malloc(sizeof(Matrix*) * m);
+Matrix** scalar_prod(double scalar, Matrix** array, int row_count, int col_count)  {
+    Matrix** result = malloc(sizeof(Matrix*) * row_count);
+
+    int i, j;
+
+    for (i = 0; i < row_count; i++) {
+        result[i] = malloc(sizeof(Matrix) * col_count);
+
+        for (j = 0; j < col_count; j++)
+            result[i][j] = scalar * array[i][j];
+    }
+
+    return result;
+}
+
+Matrix** dot(Matrix** array_1, Matrix** array_2, int row_count_1, int row_count_2, int col_count_2) {
+    Matrix** result = malloc(sizeof(Matrix*) * row_count_1);
 
     int i, j, r;
 
-    for (i = 0; i < m; i++) {
-        c[i] = malloc(sizeof(Matrix) * k);
-        for (j = 0; j < k; j++) {
-            c[i][j] = 0;
-            for (r = 0; r < n; r++)
-                c[i][j] += a[i][r] * b[r][j];
+    for (i = 0; i < row_count_1; i++) {
+        result[i] = malloc(sizeof(Matrix) * col_count_2);
+        for (j = 0; j < col_count_2; j++) {
+            result[i][j] = 0;
+            for (r = 0; r < row_count_2; r++)
+                result[i][j] += array_1[i][r] * array_2[r][j];
         }
     }
 
-    return c;
+    return result;
 }
 
-int max_in_col(Matrix **m, int col, int n) {
-    int res = col;
+int max_in_col(Matrix** array, int col, int col_count) {
+    int result = col;
     int i;
-    for (i = col + 1; i < n; i++)
-    if (fabs(m[i][col]) > fabs(m[res][col]))
-        res = i;
-    return res;
+    for (i = col + 1; i < col_count; i++)
+    if (fabs(array[i][col]) > fabs(array[result][col]))
+        result = i;
+    return result;
 }
 
-Matrix** copy(Matrix** a, int m, int n) {
-    Matrix** p = malloc(sizeof(Matrix*) * m);
+Matrix** copy(Matrix** array, int row_count, int col_count) {
+    Matrix** result = malloc(sizeof(Matrix*) * row_count);
     int i, j;
-    for (i = 0; i < m; i++) {
-        p[i] = malloc(sizeof(Matrix) * n);
-        for (j = 0; j < n; j++)
-            p[i][j] = a[i][j];
+    for (i = 0; i < row_count; i++) {
+        result[i] = malloc(sizeof(Matrix) * col_count);
+        for (j = 0; j < col_count; j++)
+            result[i][j] = array[i][j];
     }
-    return p;
+    return result;
 }
 
-Matrix** triangulation(Matrix** a, int n, int *swaps) {
-    Matrix** m = copy(a, n, n);
+Matrix** triangulation(Matrix** array, int col_count, int *swaps) {
+    Matrix** result = copy(array, col_count, col_count);
     int i, zero_det_flag = 0, swap_count = 0;
-    for (i = 0; i < n - 1; i++) {
-        int imax = max_in_col(m, i, n);
-        if (m[imax][i] == 0) {
+    for (i = 0; i < col_count - 1; i++) {
+        int imax = max_in_col(result, i, col_count);
+        if (result[imax][i] == 0) {
             zero_det_flag = 1;
             continue;
         }
         if (i != imax) {
             Matrix* tmp;
-            tmp = m[i];
-            m[i] = m[imax];
-            m[imax] = tmp;
+            tmp = result[i];
+            result[i] = result[imax];
+            result[imax] = tmp;
             swap_count++;
         }
-        for (int j = i + 1; j < n; j++) {
-            Matrix mul = m[j][i] / m[i][i];
-            for (int k = i; k < n; k++) {
-                m[j][k] -= m[i][k] * mul;
+        for (int j = i + 1; j < col_count; j++) {
+            Matrix mul = result[j][i] / result[i][i];
+            for (int k = i; k < col_count; k++) {
+                result[j][k] -= result[i][k] * mul;
             }
         }
     }
     *swaps = swap_count;
     if (zero_det_flag)
         *swaps = -1;
-    return m;
+    return result;
 }
 
-Matrix det(Matrix** m, int n) {
+Matrix det(Matrix** array, int col_count) {
     int swap_count;
-    Matrix** a = triangulation(m, n, &swap_count);
-    Matrix d = 1;
+    Matrix** triangle = triangulation(array, col_count, &swap_count);
+    Matrix result = 1;
     if (swap_count == -1)
         return 0;
     if (swap_count % 2 == 1)
-        d = -1;
+        result = -1;
     int i;
-    for (i = 0; i < n; i++)
-        d *= a[i][i];
-    free_matrix(a, n, n);
-  return d;
+    for (i = 0; i < col_count; i++)
+        result *= triangle[i][i];
+    free_matrix(triangle, col_count);
+  return result;
 }

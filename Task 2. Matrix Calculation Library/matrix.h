@@ -16,8 +16,8 @@ void print_matrix(char* message, Matrix**, int row_count, int col_count);
     разделители между строками: '\n'
 */
 
-void free_matrix(Matrix**, int row_count, int col_count);
-/*  очищает память из под матрицы row_count * col_count  */
+void free_matrix(Matrix**, int row_count);
+/*  очищает память из под матрицы с row_count строками  */
 
 Matrix** sum(Matrix** first, Matrix** second, int row_count, int col_count);
 /*  возвращает сумму матриц размера row_count * col_count
