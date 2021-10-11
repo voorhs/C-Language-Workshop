@@ -47,5 +47,5 @@ Matrix** triangulation(Matrix**, int row_count, int *swap_count);
     swap_count = -1, если встретились нулевые столбцы
 */
 
-Matrix det(Matrix**, int row_count);
+Matrix determinant(Matrix**, int row_count);
 /*  возвращает значение определителя квадратной матрицы row_count * row_count   */

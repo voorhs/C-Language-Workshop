@@ -22,15 +22,15 @@ printf("%d", sizeof(Matrix)); // 8 на большинстве систем
 ## Чтение матрицы из стандартного потока
 Функция `read_matrix()`:
 ```C
-Matrix** read_matrix(int row_count, int col_count);
+Matrix** read_matrix(int rows_count, int columns_count);
 ```
-Вводит матрицу вещественных чисел размера `row_count` X `col_count` из стандартного потока. В качестве разделителей между элементами принимает сколько угодно пробелов и переносов строки. В случае ввода символа выполнение программы прерывается.
+Вводит матрицу вещественных чисел размера `rows_count` X `columns_count` из стандартного потока. В качестве разделителей между элементами принимает сколько угодно пробелов и переносов строки. В случае ввода символа выполнение программы прерывается.
 ## Вывод матрицы в стандартный поток
 Функция `print_matrix()`:
 ```C
-void print_matrix(char* message, Matrix**, int row_count, int col_count);
+void print_matrix(char* message, Matrix**, int  rows_count, int  columns_count);
 ```
-Выводит сообщение `message`, затем выводит матрицу размера `row_count` X `col_count`  в стандартный поток в следующем формате: под вывод каждого числа отводится `10` пробелов, каждое число выводится с `3` знаками после запятой, строки матрицы разделены переносом строки.
+Выводит сообщение `message`, затем выводит матрицу размера ` rows_count` X ` columns_count`  в стандартный поток в следующем формате: под вывод каждого числа отводится `10` пробелов, каждое число выводится с `3` знаками после запятой, строки матрицы разделены переносом строки.
 Пример использования:
 ```C
 print_matrix("\nМатрица A:\n", A, M, N);
@@ -41,43 +41,43 @@ print_matrix("\nМатрица A:\n", A, M, N);
 ## Удаление массива
 Функция `free_matrix()`:
 ```C
-void free_matrix(Matrix**, int row_count, int col_count);
+void free_matrix(Matrix**, int  rows_count, int  columns_count);
 ```
-Очищает память из под матрицы размера `row_count` X `col_count`.
+Очищает память из под матрицы размера ` rows_count` X ` columns_count`.
 ## Сумма двух матриц
 Функция `sum()`:
 ```C
-Matrix** sum(Matrix** first, Matrix** second, int row_count, int col_count);
+Matrix** sum(Matrix** first, Matrix** second, int  rows_count, int  columns_count);
 ```
-Возвращает сумму матриц размера `row_count` X `col_count`. Сами матрицы не меняются.
+Возвращает сумму матриц размера ` rows_count` X ` columns_count`. Сами матрицы не меняются.
 ## Умножение матрицы на скаляр
 Функция `scalart_prod()`:
 ```C
-Matrix** scalar_prod(double scalar, Matrix**, int row_count, int col_count);
+Matrix** scalar_prod(double scalar, Matrix**, int  rows_count, int  columns_count);
 ```
-Возвращает матрицу `row_count` X `col_count`, умноженную на `scalar`. Сама матрица не меняется.
+Возвращает матрицу ` rows_count` X ` columns_count`, умноженную на `scalar`. Сама матрица не меняется.
 ## Матричное произведение
 Функция `dot()`:
 ```C
-Matrix** dot(Matrix** first, Matrix** second, int first_row_count, int second_row_count, int second_col_count);
+Matrix** dot(Matrix** first, Matrix** second, int first_ rows_count, int second_ rows_count, int second_ columns_count);
 ```
-Возвращает произведение матрицы `first` размера `first_row_count` X `second_row_count`
-и матрицы `second` размера `second_row_count` X `second_col_count` сами матрицы не меняются.
+Возвращает произведение матрицы `first` размера `first_ rows_count` X `second_ rows_count`
+и матрицы `second` размера `second_ rows_count` X `second_ columns_count` сами матрицы не меняются.
 ## Копия матрицы
 Функция `copy()`:
 ```C
-Matrix** copy(Matrix**, int row_count, int col_count);
+Matrix** copy(Matrix**, int  rows_count, int  columns_count);
 ```
-Возвращает копию матрицы размера `row_count` X `col_count`.
+Возвращает копию матрицы размера ` rows_count` X ` columns_count`.
 ## Триангуляция
 Функция `triangulation()`:
 ```C
-Matrix** triangulation(Matrix**, int row_count, int *swap_count);
+Matrix** triangulation(Matrix**, int  rows_count, int *swap_count);
 ```
-Возвращает треугольный вид, полученный методом Гаусса с перестановкой строк, квадратной матрицы размера `row_count` X `row_count`. Сама матрица не меняется. В переменную  `swap_count` записывается число перестановок строк, сделанных в процессе триангуляции. Параметр `swap_count` устанавливается `-1`, если в матрице есть нулевые столбцы.
+Возвращает треугольный вид, полученный методом Гаусса с перестановкой строк, квадратной матрицы размера ` rows_count` X ` rows_count`. Сама матрица не меняется. В переменную  `swap_count` записывается число перестановок строк, сделанных в процессе триангуляции. Параметр `swap_count` устанавливается `-1`, если в матрице есть нулевые столбцы.
 ## Детерминант матрицы
 Функция `det()`:
 ```C
-Matrix det(Matrix**, int row_count);
+Matrix det(Matrix**, int  rows_count);
 ```
-Возвращает значение определителя квадратной матрицы размера  `row_count` X `row_count`.
+Возвращает значение определителя квадратной матрицы размера  ` rows_count` X ` rows_count`.
