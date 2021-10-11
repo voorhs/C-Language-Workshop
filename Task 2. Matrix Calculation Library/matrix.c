@@ -5,9 +5,6 @@
 #include <math.h>
 #include "matrix.h"
 
-#define sp "%lf"
-#define sp_ "%10.3lf "
-
 Matrix** read_matrix(int m, int n) {
     Matrix** a = malloc(sizeof(Matrix*) * m);
     
@@ -17,7 +14,7 @@ Matrix** read_matrix(int m, int n) {
         a[i] = malloc(sizeof(Matrix) * n);
 
         for (j = 0; j < n && !read_err; j++) {
-            if (scanf(sp, a[i] + j) == 0)
+            if (scanf("%lf", a[i] + j) == 0)
                 read_err = 1;
         }
     }
@@ -32,12 +29,12 @@ Matrix** read_matrix(int m, int n) {
     
 }
 
-void print_matrix(char* msg, Matrix** a, int m, int n) {
-    printf("%s", msg);
+void print_matrix(char* message, Matrix** a, int m, int n) {
+    printf("%s", message);
     int i, j;
     for (i = 0; i < m; i++) {
         for (j = 0; j < n; j++)
-            printf(sp_, a[i][j]);
+            printf("%10.3lf ", a[i][j]);
         printf("\n");
     }
     printf("\n");

@@ -7,9 +7,9 @@ Matrix** read_matrix(int row_count, int col_count);
     разделители между строками: ' ' и '\n'
 */
 
-void print_matrix(char* msg, Matrix**, int row_count, int col_count);
+void print_matrix(char* message, Matrix**, int row_count, int col_count);
 /*  
-    выводит сообщение msg
+    выводит сообщение message
     выводит матрицу row_count * col_count в стандартный поток
     под вывод каждого числа отводится 10 пробелов
     каждое число выводится с 3 знаками после запятой
