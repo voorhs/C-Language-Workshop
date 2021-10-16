@@ -2,10 +2,28 @@
 #include <stdlib.h>
 #include <string.h>
 
+// чтение строки из файла до первого \n
+char* get_row(FILE*);
+
+// печать строки, встречающейся чаще других
+void the_most_frequent_string(FILE*);
+
+int main() {
+    FILE *source;
+    if ((source = fopen("tmp", "r")) == NULL)
+        return 1;
+    
+    the_most_frequent_string(source);
+
+    return 0;
+}
+
 char* get_row(FILE *file) {
-    char c, *result;
+    char *result;
     int size = 0;
     result = (char*)malloc(sizeof(char));
+
+    char c;
     while ((c = fgetc(file)) != '\n') {
         if (c == EOF) {
             free(result);
@@ -14,10 +32,11 @@ char* get_row(FILE *file) {
         result[size++] = c;
         result = (char*)realloc(result, sizeof(char) * (size + 1));
     }
+
     return result;
 }
 
-void the_most_frequent_string(FILE* file) {
+void the_most_frequent_string(FILE* file) { // классический алгоритм на подсчёт совпадений для каждого элемента, квадратичная сложность
     fseek(file, 0, SEEK_SET);
     char *pivot_string, *current_string;
     int max_frequency = 0, pivot_frequency, pivot_offset = 0, most_frequent_string_offset = 0, next_string_offset;
@@ -42,13 +61,4 @@ void the_most_frequent_string(FILE* file) {
 
     fseek(file, most_frequent_string_offset, SEEK_SET);
     printf("%s\n", get_row(file));
-}
-
-int main() {
-    FILE *source;
-    if ((source = fopen("tmp", "r")) == NULL)
-        return 1;
-    the_most_frequent_string(source);
-
-    return 0;
 }
