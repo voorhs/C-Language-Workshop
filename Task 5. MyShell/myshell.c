@@ -1,261 +1,126 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <regex.h>
 #include <string.h>
 
-char* get_one_string(char**, char**, int*, int*);   // считать одно слово
-int getchar_condition(char*);                       // вспомогательная утилита
-char** read_line(int*);                             // прочитать строку
-void print_string_array(char**);                    // напечатать массив строк
+/* prototypes */
+
+char* get_line();                   // считать сырую строку до \n (без парсинга)
+char** parse_line(char*);           // парсинг
+void print_str_array(char**);       // вывод массива строк
+int odd_quotes(char*);              // true, если в строке нечётное число кавычек, false иначе
+
+/* main */
 
 int main() {
-    char** string_array;
-    int end_of_file = 0;
-
-    string_array = read_line(&end_of_file);
-
-    while (!end_of_file) {
-        print_str_array(string_array);
-        string_array = read_line(&end_of_file);        
+    char* line;
+    char** args;
+        
+    while (line = get_line()) {
+        if (odd_quotes(line)) {
+            printf("\nError: Unbalanced quotes\n");            
+            continue;
+        }
+        
+        args = parse_line(line);
+        print_str_array(args);        
     }
 
-    print_str_array(string_array);
     return 0;
 }
 
-int getchar_condition(char* char_) {
-    *char_ = getchar();
-    return (*char_ != '\n') && (*char_ != EOF);
-}
+/* implementation */
 
-// результат работы: символьное слово, служебное слово, буферный char, флаг пустых символов и флаг конца файла
-char* get_one_string(char** service_word, char** last_char, int* continue_, int* eof_flag) {
-    char *result = (char*)malloc(sizeof(char));
-    char char_;
-
-    int size_of_string = 0;
+char* get_line() {
+    char* result = malloc(sizeof(char));
     int size_alloc = sizeof(char);
+    int size_of_string = 0;
+    char c;
 
-    char* service = NULL;
-    char* next_char = NULL;
+    c = getchar();
+    if (c == EOF) {
+        free(result);
+        return NULL;
+    }
 
-    int raw_string = 0;     // режим считывания без интерпретирования
-
-    while (getchar_condition(&char_)) {
-        if (char_ == '\"') {
-            raw_string = !raw_string;
-            continue;
-        }
-
-        if (!raw_string && (char_ == ' '))
-            break;
-        
-        // если встретили служебное слово
-        if (!raw_string && ((char_ == '&') || (char_ == '|') || (char_ == '>'))) {
-            next_char = malloc(sizeof(char));
-            next_char[0] = getchar();
-            if (char_ == *next_char) {
-                service = malloc(sizeof(char) * 3);
-                service[0] = char_;
-                service[1] = char_;
-                service[2] = '\0';
-                
-                next_char[0] = getchar();
-                if (next_char[0] == '\n') {
-                    break;                    
-                }                
-                break;
-            }
-            else {
-                service = malloc(sizeof(char) * 2);
-                service[0] = char_;
-                service[1] = '\0';                
-                break;
-            }
-        }
-
-        // если встретили одинарное служебное слово
-        if (!raw_string && ((char_ == ';') || (char_ == '<') \
-            || (char_ == '(') || (char_ == ')') || (char_ == '.'))) {
-            next_char = malloc(sizeof(char));
-            next_char[0] = getchar();
-            if (next_char[0] == EOF) {
-                *eof_flag = 1;                
-            }
-            service = malloc(sizeof(char) * 2);
-            service[0] = char_;
-            service[1] = '\0';
-            break;
-        }
-
-        result[size_of_string++] = char_;
+    while (c != '\n') {
+        result[size_of_string++] = c;
         size_alloc += sizeof(char);
         result = realloc(result, size_alloc);
+        c = getchar();
     }
 
     result[size_of_string] = '\0';
 
-    *last_char = next_char;
-    *service_word = service;
-
-    *continue_ = 0;
-
-    if ((char_ == EOF) || *eof_flag) {
-        *eof_flag = 1;
-        return NULL;
-    }
-    else if (char_ == '\n') {        
-        *last_char = malloc(sizeof(char));
-        **last_char = '\n';
-    }
-    else if (size_of_string == 0) {
-        if (*service_word == NULL)
-            *continue_ = 1;        
-    }
     return result;
 }
 
-// результат работы: массив строк и флаг конца файла
-char** read_line(int* eof_flag) {
-    printf("\nВход:\n");
-
-    char** result = malloc(sizeof(char*));
-    char* service_word;
-    char* buffer;
-    char prefix = '\0';
-    int continue_flag = 0;    
-    int eof_string_flag = 0;
-    char* word = get_one_string(&service_word, &buffer, &continue_flag, &eof_string_flag);
-
-    int size_alloc = 0;
-    int string_count = 0;
-
-    while (word) {
-        if (!continue_flag) {
-            if (strcmp(word, "") != 0) {
-                size_alloc += sizeof(char*);
-                result = realloc(result, size_alloc);
-                result[string_count++] = word;
-            }
-        }
-
-        if (service_word) {
-            size_alloc += sizeof(char*);
-            result = realloc(result, size_alloc);
-            result[string_count++] = service_word;
-        }            
-        
-        if (buffer) {
-            prefix = *buffer;
-            if (*buffer == '\n') {
-                size_alloc += sizeof(char*);
-                result = realloc(result, size_alloc);
-                result[string_count++] = NULL;
-                break;
-            } else if (*buffer == EOF) {
-                size_alloc += sizeof(char*);
-                result = realloc(result, size_alloc);
-                result[string_count++] = NULL;
-                *eof_flag = 1;
-                break;
-            } else if ((prefix == ';') || (prefix == '<') \
-            || (prefix == '(') || (prefix == ')') || (prefix == '.')) {
-                size_alloc += sizeof(char*);
-                result = realloc(result, size_alloc);
-            
-                service_word = malloc(sizeof(char) * 2);
-                service_word[0] = prefix;
-                service_word[1] = '\0';
-                prefix = '\0';
-            
-                result[string_count++] = service_word;
-                free(service_word);
-                service_word = NULL;
-                continue;
-            } else if ((prefix == '&') || (prefix == '|') || (prefix == '>')) {
-                prefix = getchar();
-                if (*buffer == prefix) {
-                    service_word = malloc(sizeof(char) * 3);
-            
-                    service_word[0] = *buffer;
-                    service_word[1] = prefix;
-                    service_word[2] = '\0';
-            
-                    size_alloc += sizeof(char*);
-                    result = realloc(result, size_alloc);
-                    result[string_count++] = service_word;
-                    free(service_word);
-                    service_word = NULL;
-            
-                    prefix = getchar();
-                    if (prefix == '\n') {
-                        size_alloc += sizeof(char*);
-                        result = realloc(result, size_alloc);
-                        result[string_count++] = NULL;
-                        break;
-                    }
-                    continue;
-                } else if (prefix == '\n') {
-                    service_word = malloc(sizeof(char) * 2);
-                                
-                    service_word[0] = *buffer;
-                    service_word[1] = '\0';
-            
-                    size_alloc += sizeof(char*);
-                    result = realloc(result, size_alloc);
-                    result[string_count++] = service_word;
-                    size_alloc += sizeof(char*);
-                    result = realloc(result, size_alloc);
-                    result[string_count++] = NULL;
-                    free(service_word);
-                    break;
-                }             
-            }
-        }
-
-        if (eof_string_flag) {
-            size_alloc += sizeof(char*);
-            result = realloc(result, size_alloc);
-            result[string_count++] = NULL;
-            *eof_flag = 1;
-        }
-
-        word = get_one_string(&service_word, &buffer, &continue_flag, &eof_string_flag);
-        if (continue_flag && (prefix != '\0') && (prefix != ' ')) {                        
-            word = realloc(word, 2);
-            word[0] = prefix;
-            word[1] = '\0';
-            prefix = '\0';            
-            continue_flag = 0;
-            continue;            
-        }
-        
-        if ((prefix != '\0') && (prefix != ' ')) {
-            word = realloc(word, (1 + strlen(word)) * sizeof(char));
-            word[strlen(word) + 1] = '\0';
-            int i;
-            for (i = strlen(word); i > 0; i--) {
-                word[i] = word[i-1];
-            }
-            word[0] = prefix;
-            prefix = '\0';
-        }
+int odd_quotes(char* line) {
+    int quotes_count = 0;
+    char* p;
+    for (p = line; *p; p++) {
+        quotes_count += (*p == '\"');
     }
+    return quotes_count % 2;
+}
 
-    if (string_count == 0) {
-        *eof_flag = 1;
+char** parse_line(char* line) {
+    char* start;                // указатель, с помощью которого будем перемещаться по line
+    char** result;
+    
+    result = malloc(sizeof(char*));
+    int size_alloc = sizeof(char*);
+    int size_result = 0;
+    
+    regex_t regex;              // регулярное выражение
+    regmatch_t pmatch[1];       // struct, в которую запишется результат
+    regoff_t match, len;        // смещение и длина мэтча
+
+    static const char *const re_pattern = \
+    "[^ &()|;><\\.]*?\"[^\"]*\"[^ &()|;><\\.]*|[^ &()|;><\\.]+|[&]{1,2}|[>]{1,2}|[|]{1,2}|[;<()\\.]{1}";
+
+    int error_code;
+
+    if (error_code = regcomp(&regex, re_pattern, REG_EXTENDED)) {
+        // в случае неправильного re_pattern
+        char error_msg[60];
+        regerror(error_code, &regex, error_msg, 60);
+        printf("%s\n", error_msg);
         return NULL;
     }
-    else
-        return result;
+
+    start = line;
+
+    while (regexec(&regex, start, 1, pmatch, 0) == 0) {
+        match = pmatch[0].rm_so;                        // первый символ мэтча
+        len = pmatch[0].rm_eo - pmatch[0].rm_so;        // длина мэтча
+
+        result[size_result] = malloc((len + 1) * sizeof(char));
+        memmove(result[size_result], start + match, len * sizeof(char));
+        result[size_result++][len] = '\0';
+        
+        size_alloc += sizeof(char*);
+        result = realloc(result, size_alloc);        
+
+        start += pmatch[0].rm_eo;                       // сужаем область поиска мэтчей
+    }
+    
+    result[size_result] = NULL;
+
+    return result;
 }
 
 void print_str_array(char** sarray) {
     if (sarray == NULL)
-        return;
-    int i;
+        return;    
+
     printf("\nВыход\n");
-    for(i = 0; sarray[i]; i++) {
-        printf("%s\n", sarray[i]);
+
+    char** p;
+
+    for(p = sarray; *p; p++) {
+        printf("%s\n", *p);
     }
     printf("\n\n");
 }
