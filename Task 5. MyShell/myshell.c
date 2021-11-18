@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <regex.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 /* prototypes */
 
@@ -10,6 +12,9 @@ char* get_line();                   // считать сырую строку д
 char** parse_line(char*);           // парсинг
 void print_str_array(char**);       // вывод массива строк
 int odd_quotes(char*);              // true, если в строке нечётное число кавычек, false иначе
+int shell_execute(char**);
+int vector_length(char**);
+void delete_quotes(char**);
 
 /* main */
 
@@ -24,7 +29,8 @@ int main() {
         }
         
         args = parse_line(line);
-        print_str_array(args);        
+        print_str_array(args); 
+        shell_execute(args);
     }
 
     return 0;
@@ -33,6 +39,8 @@ int main() {
 /* implementation */
 
 char* get_line() {
+    printf("input: ");
+
     char* result = malloc(sizeof(char));
     int size_alloc = sizeof(char);
     int size_of_string = 0;
@@ -99,6 +107,8 @@ char** parse_line(char* line) {
         result[size_result] = malloc((len + 1) * sizeof(char));
         memmove(result[size_result], start + match, len * sizeof(char));
         result[size_result++][len] = '\0';
+
+        delete_quotes(&result[size_result - 1]);
         
         size_alloc += sizeof(char*);
         result = realloc(result, size_alloc);        
@@ -111,16 +121,75 @@ char** parse_line(char* line) {
     return result;
 }
 
+void delete_quotes(char** string) {    
+    char* result;
+    char* cpy = *string;
+    int i;
+
+    int size_result = 0;
+    int size_alloc = sizeof(char);
+
+    result = malloc(sizeof(char));
+
+    for (i = 0; cpy[i]; i++)
+        if (cpy[i] != '\"') {
+            result[size_result++] = cpy[i];
+            size_alloc += sizeof(char);
+            result = realloc(result, size_alloc * sizeof(char));
+        }
+
+    result[size_result] = '\0';
+
+    memmove(*string, result, i);   // ответ
+    free(result);
+}
+
 void print_str_array(char** sarray) {
     if (sarray == NULL)
         return;    
 
-    printf("\nВыход\n");
+    printf("output:\n");
 
     char** p;
 
     for(p = sarray; *p; p++) {
         printf("%s\n", *p);
     }
-    printf("\n\n");
+    printf("\n");
+}
+
+int vector_length(char** vect) {
+    char** p;
+    int result = 0;
+    
+    for (p = vect; *p; p++) {
+        result += 1;
+    }
+
+    return result;
+}
+
+int shell_execute(char** args) {
+    if (strcmp(args[0], "cd") == 0) {
+        char* dir;
+        
+        if (vector_length(args) == 1)
+            dir = getenv("HOME");
+        else 
+            dir = args[1];
+        
+        if (chdir(dir) == -1) {
+            printf(">> Error\n");
+        }
+        return 0;
+    }
+
+    if (fork() == 0) {
+        execvp(args[0], args);
+        printf(">> Error\n");
+    }
+    
+    wait(NULL);
+    
+    return 0;
 }
