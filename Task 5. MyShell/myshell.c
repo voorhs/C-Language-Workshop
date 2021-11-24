@@ -441,10 +441,6 @@ void conveyor(conv_info conv) {
             exit(1);
         }
 
-        int in, out;
-        dup2(0, in);
-        dup2(1, out);
-
         if (conv.input != NULL) {
             int in;
             
@@ -497,9 +493,7 @@ void conveyor(conv_info conv) {
             
             case 0: {
                 if (i != conv.proc_count - 1) {
-                    dup2(fd[1], 1);     
-                    char* msg = "kek\n";
-                    write(out, msg, 4 * sizeof(char));               
+                    dup2(fd[1], 1);                                    
                 }
                 
                 close(fd[1]); 
