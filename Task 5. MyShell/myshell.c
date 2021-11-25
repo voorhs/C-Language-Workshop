@@ -53,6 +53,9 @@ int shell_execute(line_info);
 // утилита
 int vector_length(char**);
 
+// утилита
+void destruct_vector(char**);
+
 // удалить кавычки из строки
 void delete_quotes(char**);
 
@@ -139,7 +142,7 @@ int odd_quotes(char* line) {
 }
 
 char** find_all_simple(char* pattern, char* string, int* word_count) {
-    char* start;                // указатель, с помощью которого будем перемещаться по line
+    char* start;                // указатель, с помощью которого будем перемещаться по string
     char** result;
     
     result = malloc(sizeof(char*));
@@ -183,6 +186,14 @@ char** find_all_simple(char* pattern, char* string, int* word_count) {
     return result;
 }
 
+void destruct_vector(char** vect) {
+    char** s;
+    for (s = vect; *s; s++) {
+        free(*s);
+    }
+    free(vect);
+}
+
 line_info parse_line(char* string) {
     /* split line into conveyors by semicolon ; */
     int conv_count;
@@ -202,6 +213,8 @@ line_info parse_line(char* string) {
 
     conv_info tmp = {NULL, 0, NULL, NULL, 0, 0, 1};
     convs[i] = tmp;
+
+    destruct_vector(conv);
 
     line_info result;
     result.convs = convs;
@@ -326,6 +339,8 @@ conv_info build(char* conveyor) {
     proc_info tmp = {NULL, 0, 1};   
     conv[size] = tmp;
 
+    destruct_vector(procs);
+
     /* creating result */
     conv_info result;
     result.procs = conv;
@@ -405,8 +420,7 @@ int shell_execute(line_info line) {
     conv_info* t;
     for(t = line.convs; !t->end; t++) {
         conveyor(*t);
-    }    
-    
+    }     
     
     wait(NULL);
     
@@ -512,8 +526,7 @@ void conveyor(conv_info conv) {
         }
 
         while (wait(NULL) != -1) {;}
-        exit(0);        
-        printf("\nsomething's wrong here!\n");
+        exit(0);                
     }
     
     if (pid == -1) {
