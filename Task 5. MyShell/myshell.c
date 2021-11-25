@@ -25,6 +25,7 @@ typedef struct {
     int background_launch;
     int cd;
     int end;
+    int append;
 } conv_info;
 
 // info about whole command line
@@ -211,7 +212,7 @@ line_info parse_line(char* string) {
         convs = realloc(convs, alloc);
     }
 
-    conv_info tmp = {NULL, 0, NULL, NULL, 0, 0, 1};
+    conv_info tmp = {NULL, 0, NULL, NULL, 0, 0, 1, 0};
     convs[i] = tmp;
 
     destruct_vector(conv);
@@ -350,6 +351,7 @@ conv_info build(char* conveyor) {
     result.background_launch = back;
     result.cd = cd;
     result.end = 0;
+    result.append = append;
     
     return result;
 }
@@ -469,7 +471,12 @@ void conveyor(conv_info conv) {
         if (conv.output != NULL) {
             int out;    
 
-            if ((out = open(conv.output, O_WRONLY | O_CREAT, 0666)) == -1) {
+            if (conv.append) {
+                if ((out = open(conv.output, O_WRONLY | O_CREAT | O_APPEND, 0666)) == -1) {
+                    printf("\nsomething's wrong with %s\n", conv.output);
+                    exit(1);
+                }    
+            } else if ((out = open(conv.output, O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
                 printf("\nsomething's wrong with %s\n", conv.output);
                 exit(1);
             }
