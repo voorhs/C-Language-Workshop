@@ -27,6 +27,7 @@ typedef struct {
     int cd;
     int end;
     int append;
+    // int logic;
 } conv_info;
 
 // info about whole command line
@@ -34,6 +35,8 @@ typedef struct {
     conv_info* convs;
     int conv_count;
 } line_info;
+
+// enum Logic {NO_LOGIC, LOGIC_OR, LOGIC_AND};
 
 /* prototypes */
 
@@ -65,7 +68,10 @@ void delete_quotes(char**);
 char** find_all_simple(char*, char*, int*); 
 
 // функция парсинга введённой строки
-line_info parse_line(char*);    
+line_info parse_line(char*);
+
+// // парсинг на операнды логический функций || и &&
+// void add_convs(conv_info**, int*, char*);
 
 // функция парсинга одной команды
 proc_info analyze(char**, char**, char**, int*, int*, int*);
@@ -78,6 +84,12 @@ void print_line(line_info);
 
 // обработчик сигналов о завершении детей, отработавших в фоне
 void background_child(int s);
+
+// утилита
+void add_child();
+
+// утилита
+void remove_child(pid_t pid);
 
 // реализация конвейера
 int conveyor(conv_info);
@@ -95,6 +107,7 @@ int main() {
     signal(SIGINT, SIG_IGN);
 
     char* line; 
+    int arg;
 
     while ((line = get_line())) {
         if (odd_quotes(line)) {
@@ -104,7 +117,6 @@ int main() {
         
         line_info l = parse_line(line);
         shell_execute(l);
-        // print_line(l);
     }
 
     return 0;
@@ -206,6 +218,36 @@ void destruct_vector(char** vect) {
     free(vect);
 }
 
+// line_info parse_line(char* string) {
+//     /* split line into conveyors by semicolon ; */
+//     int conv_count;
+//     char* pattern = "[^;]+";
+//     char** conv = find_all_simple(pattern, string, &conv_count);
+
+//     conv_info* convs = malloc(sizeof(conv_info));
+//     conv_info* p;
+//     int alloc = sizeof(conv_info);
+    
+//     int i, size = 0;
+//     for (i = 0; i < conv_count; i++) {
+//         add_convs(&convs, &size, conv[i]);
+
+//         alloc = sizeof(conv_info) * size;
+//         convs = realloc(convs, alloc);
+//     }
+
+//     conv_info tmp = {NULL, 0, NULL, NULL, 0, 0, 1, 0};
+//     convs[i] = tmp;
+
+//     destruct_vector(conv);
+
+//     line_info result;
+//     result.convs = convs;
+//     result.conv_count = conv_count;    
+
+//     return result;
+// }
+
 line_info parse_line(char* string) {
     /* split line into conveyors by semicolon ; */
     int conv_count;
@@ -232,6 +274,126 @@ line_info parse_line(char* string) {
     result.convs = convs;
     result.conv_count = conv_count;    
 
+    return result;
+}
+
+// void add_convs(conv_info** container, int* cur_size, char* raw_convs) {
+//     /*
+//     посимвольно пройдём по raw_convs, чтобы отделить
+//     друг от друга логические операнды для || и &&.
+//     результат работы: добавляет к *container новые конвейеры,
+//     которые являются логическими операндами
+//     */
+//     char*       buf     = malloc(sizeof(char));
+//     int         alloc;
+//     conv_info*  result  = *container;
+//     int         size    = *cur_size;
+    
+//     result += size;
+
+//     int i, j, len;
+//     for (i = 0; raw_convs[i]; ) {
+//         j = i;
+//         int prev_v = 0;     // flag whether previos symbol is |
+//         int prev_a = 0;     // flag whether previos symbol is &
+        
+//         /* go until meet double | or & */
+//         while (raw_convs[j] && !((raw_convs[j] == '|') && (prev_v) || (raw_convs[j] == '&') && (prev_a)))
+//             j++;                    
+
+//         if (raw_convs[j]) {
+//             /* if it's not the end of raw_convs */
+//             raw_convs[j - 1] = '\0';
+//         }
+        
+//         result[size] = build(raw_convs + i);
+//         alloc += sizeof(char*);
+//         result = realloc(result, alloc);
+        
+//         switch (raw_convs[j]) {
+//             case '|' : {
+//                 result[size].logic = LOGIC_OR;
+//                 break;
+//             }
+//             case '&': {
+//                 result[size].logic = LOGIC_AND;
+//                 break;   
+//             }
+//             default: {
+//                 result[size].logic = NO_LOGIC;
+//                 break;
+//             }
+//         }
+
+//         size++;
+
+//         if (!raw_convs[j])
+//             break;
+        
+//         i = j + 1;
+//     }
+
+//     *cur_size = size;
+//     *container = result;
+// }
+
+conv_info build(char* conveyor) {
+    /* split conv into procs by vertical line | */
+    int proc_count;
+    char** procs = find_all_simple("[^|]+", conveyor, &proc_count);
+
+    /* parsing first proc in conv separately */
+    int arg_count;
+    char* pattern = "&{1,2}|<|>{1,2}|[^ &<>]+|[^ &><]*?\"[^\"]*\"[^ &><]*";
+    char** args = find_all_simple(pattern, procs[0], &arg_count);
+    
+    /* analyzing first proc */
+    char *input = NULL,     // path to input redirect file
+         *output = NULL,    // path to input redirect file
+         *buf = NULL;
+
+    int append,             // flag whether output needs to append, not overwrite
+        back,               // flag whether launch conv in background
+        cd = 0;
+    
+    proc_info proc = analyze(args, &input, &output, &append, &back, &cd);
+
+    /* creating conveyor: array of 'proc_info' structures */
+    proc_info* conv = malloc(sizeof(proc_info));
+    int alloc = sizeof(proc_info);
+    int size = 0;
+
+    /* filling in conveyor */
+    conv[size++] = proc;        // first proc
+    alloc += sizeof(proc_info);
+    conv = realloc(conv, alloc);
+
+    int j;        
+    for (j = 1; j < proc_count; j++) {
+        args = find_all_simple(pattern, procs[j], &arg_count);
+        proc = analyze(args, &buf, &output, &append, &back, &cd);
+
+        conv[size++] = proc;
+        alloc += sizeof(proc_info);
+        conv = realloc(conv, alloc);
+    }
+
+    proc_info tmp = {NULL, 0, 1};   
+    conv[size] = tmp;
+
+    destruct_vector(procs);
+
+    /* creating result */
+    conv_info result;
+    result.procs = conv;
+    result.proc_count = proc_count;
+    result.input = input;
+    result.output = output;
+    result.background_launch = back;
+    result.cd = cd;
+    result.end = 0;
+    result.append = append;
+    
     return result;
 }
 
@@ -307,66 +469,6 @@ proc_info analyze(char** args, char** input, char** output, int* append, int* ba
     return result;    
 }
 
-conv_info build(char* conveyor) {
-    /* split conv into procs by vertical line | */
-    int proc_count;
-    char** procs = find_all_simple("[^|]+", conveyor, &proc_count);
-
-    /* parsing first proc in conv separately */
-    int arg_count;
-    char* pattern = "&{1,2}|<|>{1,2}|[^ &<>]+|[^ &><]*?\"[^\"]*\"[^ &><]*";
-    char** args = find_all_simple(pattern, procs[0], &arg_count);
-    
-    /* analyzing first proc */
-    char *input = NULL,     // path to input redirect file
-         *output = NULL,    // path to input redirect file
-         *buf = NULL;
-
-    int append,             // flag whether output needs to append, not overwrite
-        back,               // flag whether launch conv in background
-        cd = 0;
-    
-    proc_info proc = analyze(args, &input, &output, &append, &back, &cd);
-
-    /* creating conveyor: array of 'proc_info' structures */
-    proc_info* conv = malloc(sizeof(proc_info));
-    int alloc = sizeof(proc_info);
-    int size = 0;
-
-    /* filling in conveyor */
-    conv[size++] = proc;        // first proc
-    alloc += sizeof(proc_info);
-    conv = realloc(conv, alloc);
-
-    int j;        
-    for (j = 1; j < proc_count; j++) {
-        args = find_all_simple(pattern, procs[j], &arg_count);
-        proc = analyze(args, &buf, &output, &append, &back, &cd);
-
-        conv[size++] = proc;
-        alloc += sizeof(proc_info);
-        conv = realloc(conv, alloc);
-    }
-
-    proc_info tmp = {NULL, 0, 1};   
-    conv[size] = tmp;
-
-    destruct_vector(procs);
-
-    /* creating result */
-    conv_info result;
-    result.procs = conv;
-    result.proc_count = proc_count;
-    result.input = input;
-    result.output = output;
-    result.background_launch = back;
-    result.cd = cd;
-    result.end = 0;
-    result.append = append;
-    
-    return result;
-}
-
 void delete_quotes(char** string) {    
     char* result;
     char* cpy = *string;
@@ -420,11 +522,26 @@ int shell_execute(line_info line) {
     }
     
     conv_info* t;
-    for(t = line.convs; !t->end; t++) {
-        conveyor(*t);
-    }     
-    
-    wait(NULL);
+    int status;
+    pid_t pid;
+    for (t = line.convs; !t->end; t++) {
+        pid = conveyor(*t);
+        
+        if (pid == -1) {
+            printf("\nfork failed\n");
+            continue;
+        }
+
+        // if (t->logic != NO_LOGIC) {
+            
+        // }
+
+        /* waiting until conveyor is done */        
+        if (!t->background_launch) {           
+            waitpid(pid, &status, 0);
+            printf("Termination status %d\n", status);
+        }            
+    }         
     
     return 0;
 }
@@ -454,14 +571,18 @@ void background_child(int s) {
     for (i = 0; i < children_size; i++) {
         pid_t code = waitpid(children[i], &status, WNOHANG);
         if (code == -1) {
-            if (errno = ECHILD)
+            if (errno = ECHILD) {
                 printf("\n%d is terminated\n", children[i]);
-            else 
+                children[i] = -1;
+            } else 
                 printf("\nwaitpid failed\n");
-        } else if (WIFEXITED(status))
+        } else if (WIFEXITED(status)) {
             printf("\n%d is terminated\n", children[i]);
-        else if (WIFSIGNALED(status))
-            printf("\n%d is terminated by signal\n", children[i]);        
+            children[i] = -1;
+        } else if (WIFSIGNALED(status)) {
+            printf("\n%d is terminated by signal\n", children[i]);
+            children[i] = -1;
+        }
     }
 }
 
@@ -564,15 +685,8 @@ int conveyor(conv_info conv) {
     }
     
     if (pid == -1) {
-        /* fork error */
+        /* fork failed */
         return -1;
-    } else {
-        /* waiting until conveyor is done */        
-        if (!conv.background_launch) {            
-            int status;
-            wait(&status);
-            return status;
-        } else       
-            return 0;
-    }
+    } else
+        return pid; 
 }
