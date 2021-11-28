@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <errno.h>
 
 /* structures */
 
@@ -75,17 +76,27 @@ conv_info build(char*);
 // утилита
 void print_line(line_info);
 
+// обработчик сигналов о завершении детей, отработавших в фоне
+void background_child(int s);
+
 // реализация конвейера
-void conveyor(conv_info);
+int conveyor(conv_info);
+
+/* global variables */
+sig_atomic_t* volatile children;
+sig_atomic_t volatile children_size = 0;
+sig_atomic_t volatile children_alloc = 0;
 
 /* main */
 
 int main() {
-    char* line;
-    char** args;
-    int size;    
+    children = malloc(sizeof(sig_atomic_t));
+    signal(SIGCHLD, background_child);
+    signal(SIGINT, SIG_IGN);
 
-    while (line = get_line()) {
+    char* line; 
+
+    while ((line = get_line())) {
         if (odd_quotes(line)) {
             printf("\nError: Unbalanced quotes\n");            
             continue;
@@ -156,7 +167,7 @@ char** find_all_simple(char* pattern, char* string, int* word_count) {
 
     int error_code;
 
-    if (error_code = regcomp(&regex, pattern, REG_EXTENDED)) {
+    if ((error_code = regcomp(&regex, pattern, REG_EXTENDED))) {
         // в случае неправильного re_pattern
         char error_msg[60];
         regerror(error_code, &regex, error_msg, 60);
@@ -393,17 +404,6 @@ void print_str_array(char** sarray) {
     printf("\n");
 }
 
-int vector_length(char** vect) {
-    char** p;
-    int result = 0;
-    
-    for (p = vect; *p; p++) {
-        result += 1;
-    }
-
-    return result;
-}
-
 int shell_execute(line_info line) {  
     if (line.convs[0].cd) {    
         char* dir;
@@ -448,10 +448,38 @@ void print_line(line_info line) {
     }
 }
 
-void conveyor(conv_info conv) {
+void background_child(int s) {
+    int status;
+    int i;
+    for (i = 0; i < children_size; i++) {
+        pid_t code = waitpid(children[i], &status, WNOHANG);
+        if (code == -1) {
+            if (errno = ECHILD)
+                printf("\n%d is terminated\n", children[i]);
+            else 
+                printf("\nwaitpid failed\n");
+        } else if (WIFEXITED(status))
+            printf("\n%d is terminated\n", children[i]);
+        else if (WIFSIGNALED(status))
+            printf("\n%d is terminated by signal\n", children[i]);        
+    }
+}
+
+void add_child(pid_t pid) {
+    children_alloc += sizeof(sig_atomic_t);
+    children = realloc(children, children_alloc);
+    children[children_size++] = pid;    
+}
+
+int conveyor(conv_info conv) {    
     pid_t pid = fork();
-    if (pid == 0) {
+    if (pid == 0) {        
         /* conveyor */        
+        if (conv.background_launch)
+            add_child(getpid());
+        else
+            signal(SIGINT, SIG_DFL);
+        
         if (conv.proc_count == 0) {
             printf("\nsomething's wrong with parameters\n");
             exit(1);
@@ -485,8 +513,7 @@ void conveyor(conv_info conv) {
         }                
 
         if (conv.proc_count == 1) {
-            if (fork() == 0) { 
-                int arg_count = 0;           
+            if (fork() == 0) {                       
                 char** args = conv.procs[0].args;
                 execvp(args[0], args);
                 printf("\nSomething's wrong with proccess 0: %s\n", args[0]);            
@@ -538,11 +565,14 @@ void conveyor(conv_info conv) {
     
     if (pid == -1) {
         /* fork error */
-        return;
+        return -1;
     } else {
-        /* waiting until conveyor is done */
-        int status;
-        wait(&status);        
-        return;
+        /* waiting until conveyor is done */        
+        if (!conv.background_launch) {            
+            int status;
+            wait(&status);
+            return status;
+        } else       
+            return 0;
     }
 }
