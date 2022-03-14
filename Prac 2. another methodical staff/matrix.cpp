@@ -17,7 +17,6 @@ Matrix::Matrix(int m, int n, double value) {
 
     for (int i = 0; i < m; ++i)
         this->content[i].reshape(n, value);        
-
 }
 
 Matrix::Matrix(const Matrix& a) {
@@ -104,7 +103,7 @@ std::istream& operator>> (std::istream& is, Matrix& v) {
     return is;
 }
 
-void Matrix::transpose() {
+Matrix Matrix::transpose() const {
     Matrix temp(this->n, this->m);
     
     for (int i = 0; i < this->m; ++i) {
@@ -112,7 +111,7 @@ void Matrix::transpose() {
             temp.content[j][i] = this->content[i][j];
     }
 
-    *this = temp;
+    return temp;
 }
 
 Vector Matrix::operator() (const Vector& v) {
@@ -185,7 +184,7 @@ int Matrix::firstNonZeroCol(const int j) {
     return i == this->m ? --i : i;
 }
 
-Matrix Matrix::triangulate(int& swaps) {
+Matrix Matrix::triangulate(int& swaps) const {
   swaps = 0;
   Matrix res(*this);
   for (int j = 0; j < n - 1; ++j) {
@@ -215,5 +214,28 @@ double Matrix::determinant() {
     for (int i = 0; i < this->n; ++i)
         res *= traingle(i, i);
     
+    return res;
+}
+
+double Matrix::norm(int p) {
+    assert((p >= 1.0) || (p == -1.0));
+    
+    double res = 0;
+
+    if (p == -1.0)
+        for (int i = 0; i < this->m; ++i) {
+            double tmp = this->content[i].Vector::norm(1.0);
+            if (tmp > res)
+                res = tmp;
+        }
+    else if (p == 1.0) {
+        res = this->transpose().norm(-1.0);
+    }
+    else {
+        Matrix tmp(*this);
+        tmp.reshape(1, (this->m) * (this->n));
+        res = tmp[0].norm(p);
+    }
+
     return res;
 }

@@ -1,8 +1,11 @@
 #include "vector.h"
 
+unsigned int Vector::objCount = 0;
+
 Vector::Vector() {
     this->n = 0;
     this->content = nullptr;
+    objCount++;
 }
 
 Vector::Vector(int n, double value) {
@@ -10,6 +13,7 @@ Vector::Vector(int n, double value) {
     this->content = new double[n];
     for (int i = 0; i < n; ++i)
         this->content[i] = value;
+    objCount++;
 }
 
 Vector::Vector(const Vector& v) {
@@ -17,10 +21,16 @@ Vector::Vector(const Vector& v) {
     this->content = new double[v.n];
     for (int i = 0; i < v.n; ++i)
         this->content[i] = v.content[i];
+    objCount++;
 }
 
 Vector::~Vector() {
     delete[] this->content;
+    objCount--;
+}
+
+unsigned Vector::getObjCount() {
+    return this->objCount;
 }
 
 void Vector::reshape(int a, double value) {
@@ -137,4 +147,28 @@ std::istream& operator>> (std::istream& is, Vector& v) {
         is >> v.content[i];
     }
     return is;
+}
+
+double Vector::norm(const double p) {
+    assert((p >= 1.0) || (p == -1.0));
+
+    double res = 0;
+
+    if (p == 1.0)
+        for (int i = 0; i < this->n; ++i)
+            res += std::abs(this->content[i]);
+    else if (p == -1.0)
+        for (int i = 0; i < this->n; ++i)
+        {
+            double tmp = std::abs(this->content[i]);
+            if (tmp > res)
+                res = tmp;
+        }
+    else {
+        for (int i = 0; i < this->n; ++i)
+            res += std::pow(this->content[i], p);
+        res = pow(res, 1.0/p);
+    }
+    
+    return res;
 }

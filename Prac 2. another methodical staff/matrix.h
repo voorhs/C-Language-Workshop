@@ -3,7 +3,7 @@
 #include <iostream>
 #include "vector.h"
 
-class Matrix {
+class Matrix: Vector {
     Vector* content;
     int m, n;
 public:
@@ -13,10 +13,11 @@ public:
     ~Matrix();
 
     void    reshape(const int a, const int b);
-    void    transpose();
+    Matrix  transpose() const;
     int     colMax(const int i);
     int     firstNonZeroCol(const int j);
-    Matrix  triangulate(int& swaps);
+    Matrix  triangulate(int& swaps) const;
+    virtual double norm(const int p);
     double  determinant();
 
     double& operator() (const int a, const int b);
