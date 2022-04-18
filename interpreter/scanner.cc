@@ -5,17 +5,17 @@
 Table_Ident Scanner::TID(100);
 
 const char* Scanner::TW[] = {
-    "", "and", "begin", "bool", "continue", "do", "else", "end", "false", "for", "if", "int",
-    "not", "or", "program", "read", "real", "string", "then", "true", "var", "while", "write", NULL
+    "", "and", "continue", "false", "if", "int",
+    "not", "or", "program", "read", "bool", "string", "true", "while", "write", NULL
 };
 
 const char* Scanner::TD[] = {
-    "", "@ outdated", ";", ",", ":", ":=", "(", ")", "=", "<", ">", "+", "++", "-", "--", "*", "/", "<=", "!=", ">=", NULL
+    "", ";", ",", "=", "(", ")", "{", "}", "==", "<", ">", "+", "-", "*", "/", "<=", "!=", ">=", NULL
 };
 
 Scanner::Scanner(const char* program) {
     if (!(fp = fopen(program, "r")))
-        throw  "can’t open file";
+        throw  "can't open file";
 }
 
 void Scanner::getchar() { c = fgetc(fp); }
@@ -33,12 +33,11 @@ int Scanner::look(const char* buf, const char** list) {
 }
 
 Lex Scanner::get_lex() {
-    enum state { H, IDENT, NUMB, REAL, STR, SLASH, COM, ALE, PLUS, MINUS, NEQ};
+    enum state { H, IDENT, NUMB, STR, SLASH, COM, ALE, PLUS, MINUS, NEQ};
     
     state CS = H;
 
-    int d, n, p, minus_flag = 1;
-    float f;
+    int d, n, minus_flag = 1;
     char buf[NAME_LEN];
     int buf_top = 0;
 
@@ -66,7 +65,7 @@ Lex Scanner::get_lex() {
             else if (c == '/') {
                 CS = SLASH;
             }
-            else if (c == ':' || c == '<' || c == '>') {
+            else if (c == '=' || c == '<' || c == '>') {
                 buf[buf_top++] = c;
                 CS = ALE;
             }
@@ -99,6 +98,14 @@ Lex Scanner::get_lex() {
             else {
                 ungetc(c, fp);
                 if ((n = look(buf, TW))) {
+                    bool isTrue  = !strcmp(buf, "true"),
+                         isFalse = !strcmp(buf, "false");
+                    
+                    if (isTrue)
+                        return Lex((type_of_lex)n, true);
+                    if (isFalse)
+                        return Lex((type_of_lex)n, false);
+
                     return Lex((type_of_lex)n);
                 }
                 else {
@@ -114,34 +121,17 @@ Lex Scanner::get_lex() {
             if (isdigit(c)) {
                 d = d * 10 + (c - '0');
             }
-            else if(c == '.') {
-                f = d;
-                p = 1;
-                CS = REAL;
-            }
             else {
                 ungetc(c, fp);
                 d *= minus_flag;
-                return Lex(LEX_INT, d);
-            }
-            break;
-
-        case REAL:
-
-            if (isdigit(c)) {
-                f += (c - '0') / pow(10, p++);
-            }
-            else {
-                ungetc(c, fp);
-                f *= minus_flag;
-                return Lex(LEX_REAL, f);
+                return Lex(LEX_INT_CONST, d);
             }
             break;
 
         case STR:
 
             if (c == '"') {
-                return Lex(LEX_STRING, buf);
+                return Lex(LEX_STRING_CONST, buf);
             }
             else if (c == EOF) {
                 throw "Bed String";
@@ -216,7 +206,8 @@ Lex Scanner::get_lex() {
                 return Lex((type_of_lex)(n + LEX_FIN));
             }
             else if (isdigit(c)) {
-                d = (c - '0'); minus_flag = -1;
+                d = (c - '0');
+                minus_flag = -1;
                 CS = NUMB;
             }
             else {
@@ -243,33 +234,25 @@ Lex Scanner::get_lex() {
 
 std::ostream& operator<<(std::ostream& out, Lex l) {
 
-    if (l.type == LEX_ID)
-    {
-        out << "(TID) " << Scanner::TID[l.int_value].get_name();
-    }
-    else if (l.type < LEX_FIN)
-    {
+    out << l.type << ' ';
+
+    if (l.type < LEX_FIN)
         out << "(TW) " << Scanner::TW[l.type] << ' ';
-    }
-    else
-    {
+
+    else if (l.type < LEX_INT_CONST)
         out << "(TD) " << Scanner::TD[l.type - LEX_FIN] << ' ';
-    }
 
-    if (l.type == LEX_INT)
-    {
-        out << l.int_value;
-    }
+    else if (l.type == LEX_INT_CONST)
+        out << "const int " << l.int_value;
 
-    else if (l.type == LEX_REAL)
-    {
-        out << l.real_value;
-    }
+    else if (l.type == LEX_BOOL)
+        out << "const real " << (l.bool_value ? "true" : "false");
 
-    else if (l.type == LEX_STRING)
-    {
-        out << l.str_value;
-    }
+    else if (l.type == LEX_STRING_CONST)
+        out << "const string " << l.str_value;
+
+    else if (l.type == LEX_ID)
+        out << "(TID) " << l.int_value << ' ' << Scanner::TID[l.int_value].get_name();
 
     return out;
 }
