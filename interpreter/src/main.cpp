@@ -11,7 +11,7 @@ int main(int argc, char** argv)
         Parser pars(argv[1]);
         cout << "-== Lexical + Syntactical + Semantical Analysis ==-\n\ttype code\ttype\t\tlexeme\n\n";
         pars.analyze();
-        cout << "\n\t-== Reverted Polish Notation: ==-\n\ttype code\ttype\t\tlexeme\n" << pars.prog << "SUCCESS" << endl;
+        cout << "\n\t-== Reverted Polish Notation: ==-\n\ttype code\ttype\t\tlexeme\n\n" << pars.prog << "SUCCESS" << endl;
         return 0;
     }
     catch (char c)

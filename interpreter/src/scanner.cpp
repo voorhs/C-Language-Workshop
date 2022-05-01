@@ -210,9 +210,9 @@ Lex* Scanner::get_lex()
             case COM:
                 if (c == '*')
                 {
-                    c = getchar();
+                    c = fgetc(fp);
                     if (c == '/')
-                        CS = H;         /// ?????? should we do unget(c, fp) ??????
+                        CS = H;
                 }
                 else if (c == EOF)
                     throw "unexpected EOF";

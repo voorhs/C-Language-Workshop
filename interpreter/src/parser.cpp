@@ -440,7 +440,7 @@ void Parser::eq_type()
     type_of_lex l_value = st.top();     st.pop();
 
     if (l_value != r_value)
-        throw "you can't use several data types within one equation";
+        throw "You can't use several data types within one equation";
 
     if (l_value == LEX_INT)
     {
@@ -470,7 +470,7 @@ void Parser::check_O() {
         st.push(LEX_INT);
         prog.push_back(new delimiter_lex(operation));
     }
-    else throw "Wrong types in operation";
+    else throw "You can't use several data types within one equation";
 }
 
 void Parser::check_A() {
@@ -484,7 +484,7 @@ void Parser::check_A() {
         st.push(LEX_INT);
         prog.push_back(new delimiter_lex(operation));
     }
-    else throw "Wrong types in operation";
+    else throw "You can't use several data types within one equation";
 }
 
 void Parser::check_L() {
@@ -504,7 +504,7 @@ void Parser::check_L() {
         prog.push_back(new operation_lex(operation, LEX_STRING));
     }
     else if (operand1 == LEX_STRING || operand2 == LEX_STRING)
-        throw "Wrong types in operation";
+        throw "You can't use several data types within one equation";
     else
     {
         st.push(LEX_INT);
@@ -526,13 +526,13 @@ void Parser::check_E1() {
     else if (operand1 == LEX_STRING && operand2 == LEX_STRING)
     {
         if (operation != LEX_PLUS)
-         throw "Wrong types in operation";
+         throw "You can't use several data types within one equation";
 
         st.push(LEX_STRING);
         prog.push_back(new operation_lex(operation, LEX_STRING));
     }
     else if (operand1 == LEX_STRING || operand2 == LEX_STRING)
-        throw "Wrong types in operation";
+        throw "You can't use several data types within one equation";
 
     else
     {
@@ -553,7 +553,7 @@ void Parser::check_T() {
         prog.push_back(new delimiter_lex(operation));
     }
     else if (operand1 == LEX_STRING || operand2 == LEX_STRING)
-        throw "Wrong types in operation";
+        throw "You can't use several data types within one equation";
 
     else
     {
@@ -568,11 +568,12 @@ void Parser::check_N() {
     type_of_lex operation = st.top(); st.pop();
 
     if (operand == LEX_STRING)
-        throw "Wrong types in operation";
+        throw "You can't use several data types within one equation";
 
     else if (operation == LEX_NOT)
     {
-        if(operand != LEX_INT) throw "Wrong types in operation";
+        if (operand != LEX_INT)
+            throw "You can't use several data types within one equation";
         st.push(LEX_INT);
         prog.push_back(new delimiter_lex(operation));
     }

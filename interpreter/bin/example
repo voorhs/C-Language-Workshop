@@ -1,0 +1,33 @@
+/*
+    you can see the work of semantic analizator by uncommenting line:
+    it will cause errors described on the same line
+*/
+
+program
+{
+    int a = 51, b = 6, c;
+    string x = "abc", y, z = "abcd";
+    bool d;
+    /* string f = 17; */        /* incompatible data type for initialization */
+    /* bool a; */               /* identifire 'a' is already declared */
+    /* read(d); */              /* you can't read boolean variables*/
+
+    c = (a + b) * 2;
+    
+    /* a = b + d; */            /* you can't use deveral data types within one equation */
+    
+    if (c >= 100 or x == z)
+    {
+        read (y);
+        write (y);
+        write (x + y + z, c);
+    }
+    
+    while (c > 100)
+    {
+        c = c - 5;
+        write (c);
+        x = x + "step";
+    }
+    write (x);
+} 
