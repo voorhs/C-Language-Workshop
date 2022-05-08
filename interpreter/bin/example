@@ -16,7 +16,7 @@ program
     
     /* a = b + d; */            /* you can't use deveral data types within one equation */
     
-    if (c >= 100 or x == z)
+    if (c >= 100 and x == z)
     {
         read (y);
         write (y);

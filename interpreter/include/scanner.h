@@ -9,23 +9,26 @@
 #include <string>
 #include <cmath>
 
-class Scanner {
-    FILE* fp;           
+class Scanner
+{
+    FILE *fp;
 
 public:
-    Scanner(const char* fileName);
+    Scanner(const char *fileName);
 
     static VecOfIdent TID;
     void addID(std::string name);
-    
-    Lex* get_lex();
+
+    Lex *get_lex();
 
     friend class id_lex;
-    friend std::ostream& operator<<(std::ostream& out, Lex* l);
+    friend std::ostream &operator<<(std::ostream &out, Lex *l);
 };
 
-class id_lex: public Lex {
+class id_lex : public Lex
+{
     std::string name;
+
 public:
     id_lex(std::string);
 

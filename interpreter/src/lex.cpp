@@ -3,20 +3,26 @@
 /* Lex */
 
 VecOfString Lex::TW =
-{
-    "", "and", "continue", "false", "if", "int",
-    "not", "or", "program", "read", "bool", "string", "true", "while", "write"
-};
+    {
+        "", "and", "continue", "false", "if", "int",
+        "not", "or", "program", "read", "bool", "string", "true", "while", "write"};
 
 VecOfString Lex::TD =
-{
-    "", ";", ",", "(", ")", "{", "}", "=", "==", "!=",
-    "<", ">", "<=", ">=", "+", "-", "*", "/"
-};
+    {
+        "", ";", ",", "(", ")", "{", "}", "=", "==", "!=",
+        "<", ">", "<=", ">=", "+", "-", "*", "/"};
 
-Lex::Lex(type_of_lex t) :
-    type(t)
+Lex::Lex(type_of_lex t) : type(t)
 {
+}
+
+Lex::~Lex()
+{
+}
+
+void RPN_lex::set_int(unsigned v)
+{
+    value = v;
 }
 
 unsigned Lex::get_index() const
@@ -29,7 +35,8 @@ type_of_lex Lex::get_type() const
     return type;
 }
 
-void Lex::set_type(type_of_lex t) {
+void Lex::set_type(type_of_lex t)
+{
     type = t;
 }
 
@@ -37,7 +44,7 @@ void Lex::set_type(type_of_lex t) {
 
 keyWord_lex::keyWord_lex(unsigned shift)
 {
-    type = static_cast<type_of_lex>(shift);    
+    type = static_cast<type_of_lex>(shift);
 }
 
 unsigned keyWord_lex::get_index() const
@@ -47,9 +54,9 @@ unsigned keyWord_lex::get_index() const
 
 /* delimiter_lex */
 
-delimiter_lex::delimiter_lex(unsigned shift)    
+delimiter_lex::delimiter_lex(unsigned shift)
 {
-    type = static_cast<type_of_lex>(LEX_FIN + shift);    
+    type = static_cast<type_of_lex>(LEX_FIN + shift);
 }
 
 unsigned delimiter_lex::get_index() const
@@ -67,22 +74,21 @@ delimiter_lex::delimiter_lex(type_of_lex t)
 operation_lex::operation_lex(type_of_lex t, type_of_lex dt)
 {
     int shift;
-    if (dt = LEX_INT)
+    if (dt == LEX_INT)
         shift = 0;
-    else if (dt = LEX_BOOL)
+    else if (dt == LEX_BOOL)
         shift = 13;
-    else if (dt = LEX_STRING)
+    else if (dt == LEX_STRING)
         shift = 16;
-    else if (dt = LEX_INT_LITER)
+    else if (dt == LEX_INT_LITER)
         shift = 4;
-    
+
     type = static_cast<type_of_lex>(t + shift);
 }
 
 /* RPN_lex */
 
-RPN_lex::RPN_lex(type_of_lex t, unsigned u) :
-    Lex(t), value(u)
+RPN_lex::RPN_lex(type_of_lex t, unsigned u) : Lex(t), value(u)
 {
 }
 
@@ -93,20 +99,17 @@ int RPN_lex::get_int() const
 
 /* literal_lex */
 
-literal_lex::literal_lex(int value) :
-    Lex(LEX_INT_LITER)
+literal_lex::literal_lex(int value) : Lex(LEX_INT_LITER)
 {
     ivalue = value;
 }
 
-literal_lex::literal_lex(std::string value) :
-    Lex(LEX_STRING_LITER)
+literal_lex::literal_lex(std::string value) : Lex(LEX_STRING_LITER)
 {
     svalue = value;
 }
 
-literal_lex::literal_lex(bool value) :
-    Lex(LEX_BOOL_LITER)
+literal_lex::literal_lex(bool value) : Lex(LEX_BOOL_LITER)
 {
     bvalue = value;
 }
