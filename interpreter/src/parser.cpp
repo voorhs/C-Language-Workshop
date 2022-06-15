@@ -1,8 +1,9 @@
 #include "parser.h"
 
-Parser::Parser(const char* buf) : scan(buf) {}
+Parser::Parser(const char *buf) : scan(buf) {}
 
-void Parser::gl() {
+void Parser::gl()
+{
     CL = scan.get_lex();
     CT = CL->get_type();
     std::cout << CL << std::endl;
@@ -21,21 +22,25 @@ void Parser::P()
         D1();
         B();
     }
-    else throw CL;
+    else
+        throw CL;
 
     if (CT == LEX_RBRACE)
         gl();
-    else throw CL;
+    else
+        throw CL;
 
     if (CT == LEX_FIN)
-        {}
-    else throw CL;
+    {
+    }
+    else
+        throw CL;
 }
 
 void Parser::D1()
 {
     while (CT == LEX_INT || CT == LEX_BOOL || CT == LEX_STRING)
-    {        
+    {
         D(CT);
 
         if (CT == LEX_SEMICOLON)
@@ -46,8 +51,8 @@ void Parser::D1()
 }
 
 void Parser::D(type_of_lex DT)
-{    
-    Lex* CID;    // current ID which might be an lvalue expression
+{
+    Lex *CID; // current ID which might be an lvalue expression
 
     do
     {
@@ -59,30 +64,41 @@ void Parser::D(type_of_lex DT)
             st.push(DT);
             gl();
         }
-        else throw CL;
+        else
+            throw CL;
 
         if (CT == LEX_ASSIGN)
         {
-            st.push(CT);
+            if (DT == LEX_INT)
+                st.push(CT);
+            
+            else if (DT == LEX_BOOL)
+                st.push(LEX_B_ASSIGN);
+
+            else if (DT == LEX_STRING)
+                st.push(LEX_S_ASSIGN);
+            
             gl();
 
             if (CT == LEX_INT_LITER || CT == LEX_BOOL_LITER || CT == LEX_STRING_LITER)
             {
-                prog.push_back(new RPN_lex(POLIZ_ADDRESS, CID->get_int()));         // shall we change this constructor?
-                prog.push_back(CL);
+                program.push_back(new RPN_lex(POLIZ_ADDRESS, CID->get_int())); // shall we change this constructor?
+                program.push_back(CL);
                 push_const();
                 eq_type();
-                prog.push_back(new delimiter_lex(LEX_SEMICOLON));     /// ???? why ????
+                program.push_back(new delimiter_lex(LEX_SEMICOLON));
                 gl();
             }
-            else throw CL;
+            else
+                throw CL;
         }
-        else st.pop();
-    }
-    while (CT == LEX_COMMA);
+        else
+            st.pop();
+    } while (CT == LEX_COMMA);
 }
 
-void Parser::B() {
+void Parser::B()
+{
     while ((CT != LEX_RBRACE) && (CT != LEX_FIN))
         S();
 }
@@ -90,56 +106,66 @@ void Parser::B() {
 void Parser::S()
 {
     if (CT == LEX_IF)
-    {        
+    {
+        int else_lp, from_lp;
         gl();
 
-        if (CT == LEX_LPAREN) {
+        if (CT == LEX_LPAREN)
+        {
             gl();
             E();
             st.pop();
-            prog.push_back(new RPN_lex(POLIZ_LABEL));   // label to else-branch
-            prog.push_back(new RPN_lex(POLIZ_FGO));     // of the conditional operator
+            else_lp = program.get_size();
+            program.push_back(new RPN_lex(POLIZ_LABEL)); // label to way out of
+            program.push_back(new RPN_lex(POLIZ_FGO));   // the conditional operator
         }
-        else throw CL;
+        else
+            throw CL;
 
-        if (CT == LEX_RPAREN) {
+        if (CT == LEX_RPAREN)
+        {
             gl();
             S();
-            prog.push_back(new RPN_lex(POLIZ_LABEL));   // way out label
-            prog.push_back(new RPN_lex(POLIZ_GO));
+            from_lp = program.get_size();
+            program[else_lp]->set_int(from_lp);
         }
-        else throw CL;
-
+        else
+            throw CL;
     }
     else if (CT == LEX_WHILE)
     {
-        int continue_l;                     // how is it used?
+        int continue_l, break_lp; // how is it used?
         gl();
         if (CT == LEX_LPAREN)
         {
             gl();
-            
-            continue_l = prog.get_size();           // label of return to next iteration
-            continue_st.push(continue_l);       
-            
+
+            continue_l = program.get_size(); // label of return to next iteration
+            continue_st.push(continue_l);
+
             E();
-            
+
             st.pop();
-            prog.push_back(new RPN_lex(POLIZ_LABEL));           // way out label
-            prog.push_back(new RPN_lex(POLIZ_FGO));             // in case condition is false
+            break_lp = program.get_size();
+            program.push_back(new RPN_lex(POLIZ_LABEL)); // way out label
+            program.push_back(new RPN_lex(POLIZ_FGO));   // in case condition is false
         }
-        else throw CL;
+        else
+            throw CL;
 
         if (CT == LEX_RPAREN)
         {
             gl();
             S();
 
-            prog.push_back(new RPN_lex(POLIZ_LABEL, continue_l));   // label to the next iteration
-            prog.push_back(new RPN_lex(POLIZ_GO));            
+            program.push_back(new RPN_lex(POLIZ_LABEL, continue_l)); // label to the next iteration
+            program.push_back(new RPN_lex(POLIZ_GO));
+            program[break_lp]->set_int(program.get_size());
         }
-        else throw CL;
-
+        else
+            throw CL;
+        
+        continue_st.pop();
     }
     else if (CT == LEX_CONTINUE)
     {
@@ -151,42 +177,47 @@ void Parser::S()
 
         continue_st.push(continue_l);
 
-        prog.push_back(new RPN_lex(POLIZ_LABEL, continue_l));
-        prog.push_back(new RPN_lex(POLIZ_GO));
+        program.push_back(new RPN_lex(POLIZ_LABEL, continue_l));
+        program.push_back(new RPN_lex(POLIZ_GO));
 
         gl();
 
         if (CT == LEX_SEMICOLON)
             gl();
-        else throw CL;
-
+        else
+            throw CL;
     }
-    else if (CT == LEX_READ) {
+    else if (CT == LEX_READ)
+    {
         gl();
 
         if (CT == LEX_LPAREN)
             gl();
-        else throw CL;
+        else
+            throw CL;
 
         if (CT == LEX_ID)
         {
             check_id();
             check_read();
 
-            prog.push_back(new RPN_lex(POLIZ_ADDRESS, CL->get_int()));
-            prog.push_back(new keyWord_lex(LEX_READ));
+            program.push_back(new RPN_lex(POLIZ_ADDRESS, CL->get_int()));
+            program.push_back(new keyWord_lex(LEX_READ));
 
             gl();
         }
-        else throw CL;
+        else
+            throw CL;
 
         if (CT == LEX_RPAREN)
             gl();
-        else throw CL;
+        else
+            throw CL;
 
         if (CT == LEX_SEMICOLON)
             gl();
-        else throw CL;
+        else
+            throw CL;
     }
     else if (CT == LEX_WRITE)
     {
@@ -194,11 +225,25 @@ void Parser::S()
 
         if (CT == LEX_LPAREN)
             gl();
-        else throw CL;
+        else
+            throw CL;
 
         E();
-        st.pop();
-        prog.push_back(new keyWord_lex(LEX_WRITE));
+
+        type_of_lex res,
+                    write_type = st.top();
+                                 st.pop();
+        
+        if (write_type == LEX_INT)
+            res = LEX_WRITE;
+
+        else if (write_type == LEX_BOOL)
+            res = LEX_B_WRITE;
+        
+        else if (write_type == LEX_STRING)
+            res = LEX_S_WRITE;
+
+        program.push_back(new keyWord_lex(res));
 
         while (CT == LEX_COMMA)
         {
@@ -206,18 +251,20 @@ void Parser::S()
             E();
 
             st.pop();
-            prog.push_back(new keyWord_lex(LEX_WRITE));
+            program.push_back(new keyWord_lex(res));
         }
 
         if (CT == LEX_RPAREN)
             gl();
 
-        else throw CL;
+        else
+            throw CL;
 
         if (CT == LEX_SEMICOLON)
             gl();
 
-        else throw CL;
+        else
+            throw CL;
     }
     else if (CT == LEX_LBRACE)
     {
@@ -226,18 +273,20 @@ void Parser::S()
 
         if (CT == LEX_RBRACE)
             gl();
-        else throw CL;
+        else
+            throw CL;
     }
     else
     {
         E();
         st.pop();
 
-        prog.push_back(new delimiter_lex(LEX_SEMICOLON));
+        program.push_back(new delimiter_lex(LEX_SEMICOLON));
 
         if (CT == LEX_SEMICOLON)
             gl();
-        else throw CL;
+        else
+            throw CL;
     }
 }
 
@@ -248,10 +297,26 @@ void Parser::E()
 
     if (CT == LEX_ASSIGN)
     {
+        type_of_lex type;
+
         if (!lvalue)
             throw "Not l_value expression";
+        else
+        {
+            Lex* tmp = program[program.get_size() - 1];
+            type = Scanner::TID[tmp->get_int()].get_type();
+            program[program.get_size() - 1] = new RPN_lex(POLIZ_ADDRESS, tmp->get_int());
+            delete tmp;
+        }
+            
+        if (type == LEX_INT)
+            st.push(CT);
+        
+        else if (type == LEX_BOOL)
+            st.push(LEX_B_ASSIGN);
 
-        st.push(CT);
+        else if (type == LEX_STRING)
+            st.push(LEX_S_ASSIGN);
 
         gl();
         E();
@@ -263,7 +328,8 @@ void Parser::O()
 {
     A();
 
-    while (CT == LEX_OR) {
+    while (CT == LEX_OR)
+    {
         lvalue = false;
 
         st.push(CT);
@@ -291,7 +357,8 @@ void Parser::L()
 {
     E1();
 
-    while (CT == LEX_EQ || CT == LEX_NEQ || CT == LEX_GTR || CT == LEX_GEQ || CT == LEX_LSS || CT == LEX_LEQ) {
+    while (CT == LEX_EQ || CT == LEX_NEQ || CT == LEX_GTR || CT == LEX_GEQ || CT == LEX_LSS || CT == LEX_LEQ)
+    {
         lvalue = false;
         st.push(CT);
         gl();
@@ -304,7 +371,8 @@ void Parser::E1()
 {
     T();
 
-    while (CT == LEX_PLUS || CT == LEX_MINUS) {
+    while (CT == LEX_PLUS || CT == LEX_MINUS)
+    {
         lvalue = false;
         st.push(CT);
         gl();
@@ -313,9 +381,11 @@ void Parser::E1()
     }
 }
 
-void Parser::T() {
+void Parser::T()
+{
     N();
-    while (CT == LEX_TIMES || CT == LEX_SLASH) {
+    while (CT == LEX_TIMES || CT == LEX_SLASH)
+    {
         lvalue = false;
         st.push(CT);
         gl();
@@ -334,10 +404,12 @@ void Parser::N()
         N();
         check_N();
     }
-    else F();
+    else
+        F();
 }
 
-void Parser::F() {
+void Parser::F()
+{
     if (CT == LEX_LPAREN)
     {
         lvalue = false;
@@ -346,14 +418,15 @@ void Parser::F() {
 
         if (CT == LEX_RPAREN)
             gl();
-        
-        else throw CL;
+
+        else
+            throw CL;
     }
     else if (CT == LEX_INT_LITER || CT == LEX_BOOL_LITER || CT == LEX_STRING_LITER)
     {
         lvalue = false;
         push_const();
-        prog.push_back(CL);
+        program.push_back(CL);
         gl();
     }
     else if (CT == LEX_ID)
@@ -361,19 +434,21 @@ void Parser::F() {
         check_id();
 
         Ident id = Scanner::TID[CL->get_int()];
-        st.push(id.get_type()); 
+        st.push(id.get_type());
         
-        prog.push_back(new RPN_lex(POLIZ_ADDRESS, CL->get_int()));
-        
+        program.push_back(CL);
+
         gl();
     }
-    else throw CL;
+    else
+        throw CL;
 }
 
-void Parser::analyze() {
+void Parser::perform()
+{
     gl();
     P();
-    std::cout << "SUCCESS" <<std::endl;
+    std::cout << "SUCCESS" << std::endl;
 }
 
 void Parser::push_const()
@@ -396,7 +471,7 @@ void Parser::check_id()
     int index = Scanner::TID.find(CL->get_string());
     Ident id = Scanner::TID[index];
 
-    if (!id.get_declare())
+    if (!id.is_declared())
         throw "ID is not declared";
 }
 
@@ -411,21 +486,24 @@ void Parser::check_read()
 
 void Parser::assertUndeclared(std::string name, type_of_lex DT)
 {
-    int index = Scanner::TID.find(name);        // should we code custom hash-table?
-    Ident& id = Scanner::TID[index];
+    int index = Scanner::TID.find(name); // should we code custom hash-table?
+    Ident &id = Scanner::TID[index];
 
-    if (id.get_declare())
+    if (id.is_declared())
         throw "ID has been already declared!";
 
     else
     {
-        id.set_declare();
+        id.set_declared();
 
         id_type res;
+        
         if (DT == LEX_INT)
             res = ID_INT;
+
         else if (DT == LEX_BOOL)
             res = ID_BOOL;
+
         else if (DT == LEX_STRING)
             res = ID_STRING;
 
@@ -435,101 +513,109 @@ void Parser::assertUndeclared(std::string name, type_of_lex DT)
 
 void Parser::eq_type()
 {
-    type_of_lex r_value = st.top();     st.pop();
-    type_of_lex operation = st.top();   st.pop();
-    type_of_lex l_value = st.top();     st.pop();
+    type_of_lex r_value = st.top();
+    st.pop();
+    type_of_lex operation = st.top();
+    st.pop();
+    type_of_lex l_value = st.top();
+    st.pop();
 
     if (l_value != r_value)
+        throw "Types of expression doesn't correspond to type of variable";
+
+    st.push(l_value);
+    program.push_back(new operation_lex(operation, LEX_INT));
+}
+
+void Parser::check_O()
+{
+
+    type_of_lex operand1 = st.top();
+    st.pop();
+    type_of_lex operation = st.top();
+    st.pop();
+    type_of_lex operand2 = st.top();
+    st.pop();
+
+    if (operand1 == LEX_BOOL && operand2 == LEX_BOOL)
+    {
+        st.push(LEX_BOOL);
+        program.push_back(new delimiter_lex(operation));
+    }
+    else
         throw "You can't use several data types within one equation";
-
-    if (l_value == LEX_INT)
-    {
-        st.push(l_value);
-        prog.push_back(new operation_lex(operation, LEX_INT));
-    }
-    else if (l_value == LEX_BOOL)
-    {
-        st.push(l_value);
-        prog.push_back(new operation_lex(operation, LEX_BOOL));
-    }
-    else if (l_value == LEX_STRING)
-    {     
-        st.push(l_value);
-        prog.push_back(new operation_lex(operation, LEX_STRING));
-    }
 }
 
-void Parser::check_O() {
+void Parser::check_A()
+{
 
-    type_of_lex operand1 = st.top(); st.pop();
-    type_of_lex operation = st.top(); st.pop();
-    type_of_lex operand2 = st.top(); st.pop();
+    type_of_lex operand1 = st.top();
+    st.pop();
+    type_of_lex operation = st.top();
+    st.pop();
+    type_of_lex operand2 = st.top();
+    st.pop();
+
+    if (operand1 == LEX_BOOL && operand2 == LEX_BOOL)
+    {
+        st.push(LEX_BOOL);
+        program.push_back(new delimiter_lex(operation));
+    }
+    else
+        throw "You can't use several data types within one equation";
+}
+
+void Parser::check_L()
+{
+
+    type_of_lex operand1 = st.top();
+    st.pop();
+    type_of_lex operation = st.top();
+    st.pop();
+    type_of_lex operand2 = st.top();
+    st.pop();
 
     if (operand1 == LEX_INT && operand2 == LEX_INT)
     {
-        st.push(LEX_INT);
-        prog.push_back(new delimiter_lex(operation));
-    }
-    else throw "You can't use several data types within one equation";
-}
-
-void Parser::check_A() {
-
-    type_of_lex operand1 = st.top(); st.pop();
-    type_of_lex operation = st.top(); st.pop();
-    type_of_lex operand2 = st.top(); st.pop();
-
-    if (operand1 == LEX_INT && operand2 == LEX_INT)
-    {
-        st.push(LEX_INT);
-        prog.push_back(new delimiter_lex(operation));
-    }
-    else throw "You can't use several data types within one equation";
-}
-
-void Parser::check_L() {
-
-    type_of_lex operand1 = st.top(); st.pop();
-    type_of_lex operation = st.top(); st.pop();
-    type_of_lex operand2 = st.top(); st.pop();
-
-    if (operand1 == LEX_INT && operand2 == LEX_INT)
-    {
-        st.push(LEX_INT);
-        prog.push_back(new delimiter_lex(operation));
+        st.push(LEX_BOOL);
+        program.push_back(new delimiter_lex(operation));
     }
     else if (operand1 == LEX_STRING && operand2 == LEX_STRING)
     {
-        st.push(LEX_INT);
-        prog.push_back(new operation_lex(operation, LEX_STRING));
+        st.push(LEX_BOOL);
+        program.push_back(new operation_lex(operation, LEX_STRING));
     }
     else if (operand1 == LEX_STRING || operand2 == LEX_STRING)
         throw "You can't use several data types within one equation";
     else
     {
-        st.push(LEX_INT);
-        prog.push_back(new operation_lex(operation, LEX_BOOL));
+        st.push(LEX_BOOL);
+        program.push_back(new operation_lex(operation, LEX_BOOL));
     }
 }
 
-void Parser::check_E1() {
+void Parser::check_E1()
+{
 
-    type_of_lex operand1 = st.top(); st.pop();
-    type_of_lex operation = st.top(); st.pop();
-    type_of_lex operand2 = st.top(); st.pop();
+    type_of_lex operand1 = st.top();
+    st.pop();
+    type_of_lex operation = st.top();
+    st.pop();
+    type_of_lex operand2 = st.top();
+    st.pop();
 
     if (operand1 == LEX_INT && operand2 == LEX_INT)
     {
         st.push(LEX_INT);
-        prog.push_back(new delimiter_lex(operation));
+        program.push_back(new delimiter_lex(operation));
     }
     else if (operand1 == LEX_STRING && operand2 == LEX_STRING)
     {
         if (operation != LEX_PLUS)
-         throw "You can't use several data types within one equation";
+            throw "You can't use several data types within one equation";
 
         st.push(LEX_STRING);
-        prog.push_back(new operation_lex(operation, LEX_STRING));
+        program.push_back(new operation_lex(operation, LEX_STRING));
     }
     else if (operand1 == LEX_STRING || operand2 == LEX_STRING)
         throw "You can't use several data types within one equation";
@@ -537,20 +623,24 @@ void Parser::check_E1() {
     else
     {
         st.push(LEX_BOOL);
-        prog.push_back(new operation_lex(operation, LEX_BOOL));
+        program.push_back(new operation_lex(operation, LEX_BOOL));
     }
 }
 
-void Parser::check_T() {
+void Parser::check_T()
+{
 
-    type_of_lex operand1 = st.top(); st.pop();
-    type_of_lex operation = st.top(); st.pop();
-    type_of_lex operand2 = st.top(); st.pop();
+    type_of_lex operand1 = st.top();
+    st.pop();
+    type_of_lex operation = st.top();
+    st.pop();
+    type_of_lex operand2 = st.top();
+    st.pop();
 
     if (operand1 == LEX_INT && operand2 == LEX_INT)
     {
         st.push(LEX_INT);
-        prog.push_back(new delimiter_lex(operation));
+        program.push_back(new delimiter_lex(operation));
     }
     else if (operand1 == LEX_STRING || operand2 == LEX_STRING)
         throw "You can't use several data types within one equation";
@@ -558,14 +648,17 @@ void Parser::check_T() {
     else
     {
         st.push(LEX_BOOL);
-        prog.push_back(new operation_lex(operation, LEX_BOOL));
+        program.push_back(new operation_lex(operation, LEX_BOOL));
     }
 }
 
-void Parser::check_N() {
+void Parser::check_N()
+{
 
-    type_of_lex operand = st.top(); st.pop();
-    type_of_lex operation = st.top(); st.pop();
+    type_of_lex operand = st.top();
+    st.pop();
+    type_of_lex operation = st.top();
+    st.pop();
 
     if (operand == LEX_STRING)
         throw "You can't use several data types within one equation";
@@ -575,14 +668,14 @@ void Parser::check_N() {
         if (operand != LEX_INT)
             throw "You can't use several data types within one equation";
         st.push(LEX_INT);
-        prog.push_back(new delimiter_lex(operation));
+        program.push_back(new delimiter_lex(operation));
     }
     else
     {
-        if(operand == LEX_INT)
+        if (operand == LEX_INT)
         {
             st.push(LEX_INT);
-            prog.push_back(new operation_lex(operation, LEX_INT_LITER));
+            program.push_back(new operation_lex(operation, LEX_INT_LITER));
         }
     }
 }

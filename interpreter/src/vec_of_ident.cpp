@@ -1,7 +1,6 @@
 #include "vec_of_ident.h"
 
-VecOfIdent::VecOfIdent() : 
-    size(0)
+VecOfIdent::VecOfIdent() : size(0)
 {
     content = new Ident[1];
     content[0] = Ident();
@@ -13,8 +12,8 @@ VecOfIdent::~VecOfIdent()
 }
 
 void VecOfIdent::push_back(Ident newElem)
-{    
-    Ident* newContent = new Ident[size + 1];
+{
+    Ident *newContent = new Ident[size + 1];
 
     for (int i = 0; i < size; ++i)
         newContent[i] = content[i];
@@ -37,7 +36,7 @@ int VecOfIdent::get_size() const
     return size;
 }
 
-Ident& VecOfIdent::operator[] (unsigned index)
+Ident &VecOfIdent::operator[](unsigned index)
 {
     return content[index];
 }

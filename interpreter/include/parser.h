@@ -7,20 +7,21 @@
 #include <iostream>
 #include <stack>
 
-class Parser {
-    Lex*         CL;     // current lexeme
-    type_of_lex CT;     // type of CL
+class Parser
+{
+    Lex*        CL;         // current lexeme
+    type_of_lex CT;         // type of CL
 
     Scanner scan;
-    bool lvalue;
-    std::stack<type_of_lex>    st;
-    std::stack<int>             continue_st;    
+    bool    lvalue;
+    std::stack<type_of_lex> st;
+    std::stack<int>         continue_st;
 
     /* utilities */
     void push_const();
     void gl();
 
-    /* recursive procedures */
+    /* recursive procedures, states of parser */
     void P();
     void D1();
     void D(type_of_lex);
@@ -48,7 +49,8 @@ class Parser {
     void check_N();
 
 public:
-    Parser(const char*);
-    RPN prog;
-    void analyze();
+    Parser(const char *);
+    
+    RPN     program;
+    void    perform();
 };

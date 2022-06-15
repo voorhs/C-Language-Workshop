@@ -26,11 +26,11 @@ enum type_of_lex {
     LEX_U_PLUS,     LEX_U_MINUS,    LEX_B_ASSIGN,   LEX_B_EQ,       LEX_B_NEQ,          /* 37 */
     LEX_S_ASSIGN,   LEX_S_EQ,       LEX_S_NEQ,      LEX_S_LSS,      LEX_S_GTR,          /* 42 */
     LEX_S_LEQ,      LEX_S_GEQ,      LEX_S_PLUS,     LEX_INT_LITER,  LEX_STRING_LITER,   /* 47 */
-    LEX_BOOL_LITER, LEX_ID,                                                             /* 49 */
+    LEX_BOOL_LITER, LEX_ID,         LEX_B_WRITE,    LEX_S_WRITE,                        /* 51 */
 
 /* reverted polish notation */
 
-    POLIZ_LABEL,    POLIZ_ADDRESS,  POLIZ_GO,       POLIZ_FGO,                          /* 62 */
+    POLIZ_LABEL,    POLIZ_ADDRESS,  POLIZ_GO,       POLIZ_FGO,                          /* 55 */
 
 };
 
@@ -39,53 +39,57 @@ enum type_of_lex {
 class Lex
 {
 protected:
-    type_of_lex type;    
+    type_of_lex type;
 
-    static VecOfString TW;  // table of key words
-    static VecOfString TD;  // table of delimiters and math operators
-    
+    static VecOfString TW; // table of key words
+    static VecOfString TD; // table of delimiters and math operators
+
 public:
-    Lex(type_of_lex t = LEX_NULL);    
+    Lex(type_of_lex t = LEX_NULL);
+    virtual ~Lex();
 
     virtual unsigned    get_index() const;
-    type_of_lex get_type() const;
-    void        set_type(type_of_lex);
+    type_of_lex         get_type() const;
+    void                set_type(type_of_lex);
+    virtual void        set_int(unsigned) {}  
 
     virtual int         get_int() const { return 0; }
-    virtual std::string get_string() const  { return 0; }
-    virtual bool        get_bool() const  { return 0; }
+    virtual std::string get_string() const { return 0; }
+    virtual bool        get_bool() const { return 0; }
 
     friend class Scanner;
-    friend std::ostream& operator<<(std::ostream& out, Lex* l);
+    friend std::ostream &operator<<(std::ostream &out, Lex *l);
 };
 
 //// first group of derived classes ////
 
-struct keyWord_lex: Lex
+struct keyWord_lex : Lex
 {
     keyWord_lex(unsigned);
     unsigned get_index() const;
 };
 
-struct delimiter_lex: Lex
+struct delimiter_lex : Lex
 {
-    delimiter_lex(unsigned);    
+    delimiter_lex(unsigned);
     delimiter_lex(type_of_lex t);
     unsigned get_index() const;
 };
 
-struct operation_lex: Lex
+struct operation_lex : Lex
 {
     operation_lex(type_of_lex, type_of_lex);
 };
 
 //// second group of derived classes ////
 
-class literal_lex: public Lex {
+class literal_lex : public Lex
+{
     int         ivalue;         // for LEX_INT_LITER
     std::string svalue;         // for LEX_STRING_LITER
     bool        bvalue;         // for LEX_BOOL_LITER
-public:    
+
+public:
     literal_lex(int);
     literal_lex(std::string);
     literal_lex(bool);
@@ -95,9 +99,12 @@ public:
     bool        get_bool() const;
 };
 
-class RPN_lex: public Lex {
+class RPN_lex : public Lex
+{
     unsigned value;
+
 public:
     RPN_lex(type_of_lex, unsigned = 0);
     int get_int() const;
+    void set_int(unsigned);
 };
